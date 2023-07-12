@@ -2,7 +2,9 @@ import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
 import re
 
-def find_next_free_binding_id(xml_file):
+def find_next_two_binding_ids(xml_file):
+    '''This should find the next two available binding ids for the new element'''
+
     # Parse the XML file
     tree = ET.parse(xml_file)
     root = tree.getroot()
@@ -14,16 +16,60 @@ def find_next_free_binding_id(xml_file):
     max_id = max(binding_ids) if binding_ids else -1
 
     # Determine the next free binding ID
-    next_id = max_id + 1
+    next_ids = [max_id + 1, max_id + 2]
 
-    return next_id
+    return next_ids
+
+def find_next_two_object_ids(DS_file):
+    '''This should find the next two available maximum object ids for the new element'''
+    with open(DS_file, 'r') as file:
+        datasource_content = file.read()
+
+    dataobject_ids = re.findall(r'<dataobject id="(\d+)"', datasource_content)
+    dataobject_ids = [int(id) for id in dataobject_ids]
+
+    max_id = max(dataobject_ids) if dataobject_ids else 0
+    next_available_ids = [max_id + 1, max_id + 2]
+
+    return next_available_ids
+# THESE ARE THE SAME JUST ONE FINDS LARGEST NUMBERS, OTHER FINDS NESTED FREE ONES
+def find_next_free_object_ids(DS_file):
+    '''This should find the next two available object ids for the new element'''
+    with open(DS_file, 'r') as file:
+        datasource_content = file.read()
+
+    dataobject_ids = re.findall(r'<dataobject id="(\d+)"', datasource_content)
+    dataobject_ids = set(map(int, dataobject_ids))  # Convert to set for efficient lookup
+
+    next_available_ids = []
+    current_id = 1
+    while len(next_available_ids) < 2:
+        if current_id not in dataobject_ids:
+            next_available_ids.append(current_id)
+        current_id += 1
+
+    return next_available_ids
+
+def find_next_available_shape_number(file_content):
+    pattern = r'shape(\d{3})'
+    shape_numbers = [int(match.group(1)) for match in re.finditer(pattern, file_content)]
+    
+    # Find the next available number that is not present in the file
+    for i in range(1, 1000):
+        if i not in shape_numbers:
+            next_number_formatted = f"{i:03}"  # Format the number with 3 digits
+            return f"shape{next_number_formatted}"
+    
+    return None  # Return None if all possible numbers are taken
 
 def find_checkbox_elements(html_content):
+    '''Finds all the check box elements and returns a list of them'''
     pattern = r'<SPAN[^>]*class=hsc\.checkbox[^>]*>.*?Checkbox</SPAN></SPAN>'
     checkbox_matches = re.findall(pattern, html_content, re.DOTALL)
     return checkbox_matches
 
 def extract_checkbox_info(checkbox_content):
+    '''Extracts all the relevant information from a given checkbox: [LEFT, TOP, HDXid]'''
     left_match = re.search(r'LEFT:\s*([\d.]+)(%|px)', checkbox_content)
     top_match = re.search(r'TOP:\s*([\d.]+)(%|px)', checkbox_content)
     binding_id_match = re.search(r'HDXBINDINGID:\s*(\d+)', checkbox_content)
@@ -47,10 +93,10 @@ def extract_checkbox_info(checkbox_content):
         binding_id = binding_id_match.group(1)
         infoDisplay = f"HDXBINDINGID: {binding_id}"
         infoData = [binding_id]
-
     return infoDisplay, infoData
 
 def extract_and_copy_checkboxes(html_file):
+    '''Finds all the check box elements and extracts all the relevant information about them as a list of [[LEFT, TOP, HDXid], ...]'''
     with open(html_file, 'r') as file:
         html_content = file.read()
 
@@ -69,7 +115,9 @@ def extract_and_copy_checkboxes(html_file):
 
     return allInfo
 
+
 def find_and_copy_bindings(xml_file, target_ids):
+    '''Copys all the bindings from xml with binding id's in "target_ids" and finds the corresponding object id's'''
     with open(xml_file, 'r') as file:
         xml_content = file.read()
 
@@ -97,7 +145,31 @@ def find_and_copy_bindings(xml_file, target_ids):
 
     return associated_objectids
 
+def find_objectID(xml_file, target_id):
+    '''Copys all the bindings from xml with binding id's in "target_ids" and finds the corresponding object id's'''
+    with open(xml_file, 'r') as file:
+        xml_content = file.read()
+
+    pattern = r'<binding ID="(\d+)">(.*?)</binding>'
+    binding_matches = re.findall(pattern, xml_content, re.DOTALL)
+
+    for match in binding_matches:
+        binding_id, binding_content = match
+        if binding_id == target_id:
+            deleted_binding = binding_content + '</binding>'
+            objectid_match = re.search(r'objectid="(\d+)"', binding_content)
+            objectID = objectid_match.group(1)
+
+    with open('deletedBindings.txt', 'w') as file:
+        file.write(f"{deleted_binding}\n")
+
+    if objectID:
+        print(f"The associated objectid is: {', '.join(objectID)}")
+
+    return objectID, deleted_binding
+
 def find_and_copy_dataobjects(datasource_file, target_ids):
+    '''Finds all datasource dataobjects with objectid in "target_ids" and copys them'''
     with open(datasource_file, 'r') as file:
         datasource_content = file.read()
 
@@ -122,16 +194,42 @@ def find_and_copy_dataobjects(datasource_file, target_ids):
 
     return len(deleted_dataobjects)
 
+def get_point_name(datasource_file, target_id):
+    '''Removes datasource dataobjects with objectid in "target_ids" and saves their '''
+    with open(datasource_file, 'r') as file:
+        datasource_content = file.read()
+
+    pattern = r'<dataobject id="(\d+)"(.*?)</dataobject>'
+    dataobject_matches = re.findall(pattern, datasource_content, re.DOTALL)
+
+
+    for match in dataobject_matches:
+        dataobject_id, dataobject_content = match
+        if dataobject_id == target_id:
+            deleted_dataobject = f"<dataobject id=\"{dataobject_id}\"{dataobject_content}"
+            # Extract the PointRefPointName
+            point_name_match = re.search(r'<property name="PointRefPointName">(.*?)</property>', dataobject_content)
+            if point_name_match:
+                point_name = point_name_match.group(1)
+                print(f"Deleted dataobject ID: {dataobject_id}\tPointFefPointName: {point_name}")
+                
+    with open('deletedDataS.txt', 'w') as file:
+        file.write(f"{deleted_dataobject}\n")
+
+    return point_name, deleted_dataobject
+
 
 # shape_name = 'shape033'
 # display_name = '2m-ahu2'
 # left = 601
 # top = 492
-# PointRefPointName = '2M-AHU2-CV'
+# pointName = '2M-AHU2-CV'
 # HDXids = [52, 54]
 
-def get_relinquish(shape_name, PointRefPointName, HDXids, left, top, display_name):
-	relinquish_script_string = f'''
+def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file):
+    '''Gets the string sections that correspond to the relinquish control element and embedds the relevant information'''
+
+    relinquish_script_string = f'''
 	<SCRIPT language=VBScript for={shape_name}_relinquish_group defer event=onclick>on error resume next
 	{shape_name}_RelinquishControl.value = 1</SCRIPT>
 	<SCRIPT language=VBScript for={shape_name}_ModeState defer event=onupdate>on error resume next
@@ -141,12 +239,13 @@ def get_relinquish(shape_name, PointRefPointName, HDXids, left, top, display_nam
 		{shape_name}_relinquish_group.style.visibility = "hidden"
 	end if</SCRIPT>
 	'''
-	relinquish_body_string = f'''
+
+    relinquish_body_string = f'''
 	<DIV tabIndex=-1 id={shape_name} class=hsc.shape.1 
 	style="FONT-SIZE: 0px; TEXT-DECORATION: none; HEIGHT: 18px; FONT-FAMILY: Arial; WIDTH: 16px; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: {left}; TOP: {top}; BEHAVIOR: url(#HSCShapeLinkBehavior) url(#HDXVectorFactory#shapelink)" 
 	hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Width:16;" 
-	value = "1" src = ".\{display_name}_files\relinquish_control.sha" parameters = 
-	"Point?PointName:{PointRefPointName};" linkType = "embedded" globalscripts = "" 
+	value = "1" src = ".\{display_file}_files\relinquish_control.sha" parameters = 
+	"Point?PointName:{pointName};" linkType = "embedded" globalscripts = "" 
 	styleClass = "">
 		<DIV tabIndex=-1 id={shape_name}_relinquish_group class=hvg.group.1 
 		style="FONT-SIZE: 0pt; HEIGHT: 100%; WIDTH: 100%; POSITION: absolute; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#group); VISIBILITY: hidden" 
@@ -159,11 +258,18 @@ def get_relinquish(shape_name, PointRefPointName, HDXids, left, top, display_nam
 			<DIV tabIndex=-1 id={shape_name}_relinquish_icon class=hsc.image.1 
 			style="OVERFLOW: hidden; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#image)" 
 			hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Src:.\2m-ahu2_files\relinquish_control_files\relinquish_button.JPG;Width:16;" 
-			shapesrc=".\{display_name}_files\relinquish_control_files\relinquish_button.JPG"></DIV>
+			shapesrc=".\{display_file}_files\relinquish_control_files\relinquish_button.JPG"></DIV>
 		</DIV>
 	</DIV>
 	'''
-	return relinquish_script_string, relinquish_body_string
+
+    MS_relinquish_binding = f'''<binding ID="{HDXids[0]}"><dataobject ID="dso1" objectmodelid="datasource1" objecttype="HMIPage.Generic" objectid="{DOids[0]}"/><class ID="HSC.Alpha" refcount="1"/></binding>'''
+    RC_relinquish_binding = f'''<binding ID="{HDXids[1]}"><dataobject ID="dso1" objectmodelid="datasource1" objecttype="HMIPage.Generic" objectid="{DOids[1]}"/><class ID="HSC.Alpha" refcount="1"/></binding>'''
+
+    MS_relinquish_dataS = f'''<dataobject id="{DOids[0]}" type="HMIPage.Generic" format="propertybag"><property name="AddressFlags">0</property><property name="AddressType">0</property><property name="CalloutElement"></property><property name="ObjectType">0</property><property name="ParameterFormat">0</property><property name="PointRefFlags">0</property><property name="PointRefParamName">ModeState</property><property name="PointRefParamOffset">0</property><property name="PointRefPointName">{pointName}</property><property name="PresentationType">0</property><property name="SecurityLevel">2</property><property name="UpdatePeriod">0</property><property name="version">1.3</property></dataobject>'''
+    RC_relinquish_dataS = f'''<dataobject id="{DOids[1]}" type="HMIPage.Generic" format="propertybag"><property name="AddressFlags">0</property><property name="AddressType">0</property><property name="CalloutElement"></property><property name="ObjectType">0</property><property name="ParameterFormat">0</property><property name="PointRefFlags">0</property><property name="PointRefParamName">RelinquishControl</property><property name="PointRefParamOffset">0</property><property name="PointRefPointName">{pointName}</property><property name="PresentationType">0</property><property name="SecurityLevel">3</property><property name="UpdatePeriod">0</property><property name="version">1.3</property></dataobject>'''
+
+    return relinquish_script_string, relinquish_body_string, MS_relinquish_binding, RC_relinquish_binding, MS_relinquish_dataS, RC_relinquish_dataS
 
 # Example usage
 html_file = 'checkingChanges2/afterChange.htm'
@@ -177,7 +283,6 @@ objectIDs = find_and_copy_bindings(bindingFile, HDXIDs)
 datasourceFile = 'checkingChanges2/afterChangeDS.dsd'
 objectsFound = find_and_copy_dataobjects(datasourceFile, objectIDs)
 
-for element in info
 # # Example usage
 # xml_file = 'checkingChanges2/afterChangeBindings.xml'  # Replace with your XML binding file
 # next_free_id = find_next_free_binding_id(xml_file)
