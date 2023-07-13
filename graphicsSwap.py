@@ -24,7 +24,7 @@ for i in range(0, len(check_boxes)): #change to len(check_boxes)
     checkBoxName = extract_checkbox_id(checkBox)
     print("CheckBox Deleted: ", checkBoxName)
 
-    shape = find_next_available_shape_number(html_content)
+    shape = find_next_available_shape_number(DISPLAYfile)
     print("New Shape Created: ", shape)
     
     deleted_elements.append(checkBox+'\n')
@@ -38,31 +38,34 @@ for i in range(0, len(check_boxes)): #change to len(check_boxes)
     # print(binding_to_delete)
 
     pointName, DS_object_to_delete = get_point_name(DSfile, CB_objectID)
+    print(DS_object_to_delete)
 
     HDXids = find_next_two_binding_ids(BINDINGfile)
 
     DOids = find_next_two_object_ids(DSfile)
 
-    print("DS: Deleted: {}, Added: {}\nHDX: Deleted: {}, Added: {}".format(CB_objectID, DOids, CB_bindingID, HDXids))
+    print("HDX: Deleted: {}, Added: {}\nDS: Deleted: {}, Added: {}".format(CB_bindingID, HDXids, CB_objectID, DOids))
 
     autoBoxHTM, autoBoxXML, autoBoxDSD = get_auto_box(shape, pointName, HDXids, DOids, CB_LEFT, CB_TOP, displayFolder)
 
-    replace_string_in_file(DISPLAYfile, checkBox, autoBoxHTM)
-    replace_string_in_file(DISPLAYfile, binding_to_delete, autoBoxXML)
-    replace_string_in_file(DISPLAYfile, DS_object_to_delete, autoBoxDSD)
+    # Replacel the checkbox with Auto box 
+    # replace_string_in_file(DISPLAYfile, checkBox, autoBoxHTM)
+    # replace_string_in_file(BINDINGfile, binding_to_delete, autoBoxXML)
+    # replace_string_in_file(DSfile, DS_object_to_delete, autoBoxDSD)
+    # THIS WORKS FOR AUTOBOX ONLY ^^^
+    
+    relinquish_script_string, relinquish_body_string, MS_relinquish_binding, RC_relinquish_binding, MS_relinquish_dataS, RC_relinquish_dataS = get_relinquish(shape, pointName, HDXids, DOids, CB_LEFT, CB_TOP, displayFolder)
+    DS_object_to_add = MS_relinquish_dataS + RC_relinquish_dataS
+    binding_to_add = MS_relinquish_binding + RC_relinquish_binding
 
-    # relinquish_script_string, relinquish_body_string, MS_relinquish_binding, RC_relinquish_binding, MS_relinquish_dataS, RC_relinquish_dataS = get_relinquish(shape, pointName, HDXids, DOids, CB_LEFT, CB_TOP, displayFolder)
-    # DS_object_to_add = MS_relinquish_dataS + RC_relinquish_dataS
-    # binding_to_add = MS_relinquish_binding + RC_relinquish_binding
+    insert_relinquish_script(DISPLAYfile, relinquish_script_string)
+    replace_string_in_file(DISPLAYfile, checkBox, relinquish_body_string)
+    search_substring_in_file(DISPLAYfile, checkBoxName)
 
-    # insert_relinquish_script(DISPLAYfile, relinquish_script_string)
-    # replace_string_in_file(DISPLAYfile, checkBox, relinquish_body_string)
-    # search_substring_in_file(DISPLAYfile, checkBoxName)
+    replace_string_in_file(DSfile, DS_object_to_delete, DS_object_to_add)
+    search_substring_in_file(DSfile, 'id="{}"'.format(CB_objectID))
 
-    # replace_string_in_file(DSfile, DS_object_to_delete, DS_object_to_add)
-    # search_substring_in_file(DSfile, 'id="{}"'.format(CB_objectID))
-
-    # replace_string_in_file(BINDINGfile, binding_to_delete, binding_to_add)
-    # search_substring_in_file(BINDINGfile, 'ID="{}"'.format(CB_bindingID))
+    replace_string_in_file(BINDINGfile, binding_to_delete, binding_to_add)
+    search_substring_in_file(BINDINGfile, 'ID="{}"'.format(CB_bindingID))
 
 print("Made {} replacements".format(i))

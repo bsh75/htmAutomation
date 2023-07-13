@@ -71,7 +71,10 @@ def find_next_free_object_ids(DS_file):
 
     return next_available_ids
 
-def find_next_available_shape_number(file_content):
+def find_next_available_shape_number(Dfile):
+    with open(Dfile, 'r') as file:
+        file_content = file.read()
+
     pattern = r'shape(\d{3})'
     shape_numbers = [int(match.group(1)) for match in re.finditer(pattern, file_content)]
     
@@ -224,7 +227,7 @@ def get_point_name(datasource_file, target_id):
     for match in dataobject_matches:
         dataobject_id, dataobject_content = match
         if dataobject_id == target_id:
-            deleted_dataobject = f"<dataobject id=\"{dataobject_id}\"{dataobject_content}"
+            deleted_dataobject = f"<dataobject id=\"{dataobject_id}\"{dataobject_content}</dataobject>"
             # Extract the PointRefPointName
             point_name_match = re.search(r'<property name="PointRefPointName">(.*?)</property>', dataobject_content)
             if point_name_match:
@@ -278,12 +281,12 @@ def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file
 		{shape_name}_relinquish_group.style.visibility = "hidden"
 	end if</SCRIPT>
 	'''
-
+    r_slash = r"\r"
     relinquish_body_string = f'''
     <DIV tabIndex=-1 id={shape_name} class=hsc.shape.1 
     style="FONT-SIZE: 0px; TEXT-DECORATION: none; HEIGHT: 18px; FONT-FAMILY: Arial; WIDTH: 16px; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: {left}; TOP: {top}; BEHAVIOR: url(#HSCShapeLinkBehavior) url(#HDXVectorFactory#shapelink)" 
     hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Width:16;" 
-    value = "1" src = ".\{display_file}_files\relinquish_control.sha" parameters = 
+    value = "1" src = ".\{display_file}_files{r_slash}elinquish_control.sha" parameters = 
     "Point?PointName:{pointName};" linkType = "embedded" globalscripts = "" 
     styleClass = "">
     <DIV tabIndex=-1 id={shape_name}_relinquish_group class=hvg.group.1 
@@ -291,8 +294,8 @@ def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file
     hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Width:16;"><TEXTAREA tabIndex=0 id={shape_name}_ModeState class=hsc.alpha.1 style="BORDER-TOP-STYLE: none; OVERFLOW: hidden; WORD-WRAP: normal; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; BORDER-BOTTOM-STYLE: none; POSITION: absolute; FONT-WEIGHT: 400; COLOR: #000000; FONT-STYLE: normal; TEXT-ALIGN: center; BORDER-RIGHT-STYLE: none; LEFT: 0%; BORDER-LEFT-STYLE: none; TOP: 0%; BEHAVIOR: url(#HDXAlphaBehavior) url(#BindingBehavior); VISIBILITY: hidden; BACKGROUND-COLOR: transparent; ROWS: 1" hdxproperties="fillColor:transparent;HDXBINDINGID:{HDXids[0]};lineColor:black;numericDisplayFormat:%.2f;textColor:#000000;">9999.99</TEXTAREA><TEXTAREA tabIndex=0 id={shape_name}_RelinquishControl class=hsc.alpha.1 style="BORDER-TOP-STYLE: none; OVERFLOW: hidden; WORD-WRAP: normal; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; BORDER-BOTTOM-STYLE: none; POSITION: absolute; FONT-WEIGHT: 400; COLOR: #000000; FONT-STYLE: normal; TEXT-ALIGN: center; BORDER-RIGHT-STYLE: none; LEFT: 0%; BORDER-LEFT-STYLE: none; TOP: 0%; BEHAVIOR: url(#HDXAlphaBehavior) url(#BindingBehavior); VISIBILITY: hidden; BACKGROUND-COLOR: transparent; ROWS: 1" hdxproperties="fillColor:transparent;HDXBINDINGID:{HDXids[1]};lineColor:black;numericDisplayFormat:%.2f;textColor:#000000;">9999.99</TEXTAREA>
     <DIV tabIndex=-1 id={shape_name}_relinquish_icon class=hsc.image.1 
     style="OVERFLOW: hidden; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#image)"
-    hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Src:.\{display_file}_files\relinquish_control_files\relinquish_button.JPG;Width:16;" 
-    shapesrc=".\{display_file}_files\relinquish_control_files\relinquish_button.JPG"></DIV></DIV></DIV>
+    hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Src:.\{display_file}_files{r_slash}elinquish_control_files{r_slash}elinquish_button.JPG;Width:16;" 
+    shapesrc=".\{display_file}_files{r_slash}elinquish_control_files{r_slash}elinquish_button.JPG"></DIV></DIV></DIV>
 	'''
 
     MS_relinquish_binding = f'''<binding ID="{HDXids[0]}"><dataobject ID="dso1" objectmodelid="datasource1" objecttype="HMIPage.Generic" objectid="{DOids[0]}"/><class ID="HSC.Alpha" refcount="1"/></binding>'''
@@ -315,7 +318,9 @@ def get_auto_box(shape_name, pointName, HDXids, DOids, left, top, display_file):
 	hdxproperties="FillColor:#808080;fillColorBlink:False;FillStyle:0;Height:16;lineColorBlink:False;LineStyle:0;textColor:#c0c0c0;textColorBlink:False;TotalRotation:0;Width:24;" 
 	HDX_LOCK="-1">Auto</DIV></DIV>
     '''
+    
     auto_box_binding = f'''<binding ID="{HDXids[0]}"><dataobject ID="dso1" objectmodelid="datasource1" objecttype="HMIPage.Generic" objectid="{DOids[0]}"/><class ID="HSC.Shapelink" refcount="1"/></binding>'''
+
     auto_box_dataS = f'''<dataobject id="{DOids[0]}" type="HMIPage.Generic" format="propertybag"><property name="AddressFlags">1</property><property name="AddressType">0</property><property name="CalloutElement"></property><property name="ObjectType">0</property><property name="ParameterFormat">0</property><property name="PointRefFlags">0</property><property name="PointRefParamName">ModeState</property><property name="PointRefParamOffset">0</property><property name="PointRefPointName">{pointName}</property><property name="PresentationType">0</property><property name="SecurityLevel">0</property><property name="UpdatePeriod">0</property><property name="version">1.3</property></dataobject>'''
 
     return auto_box_body, auto_box_binding, auto_box_dataS

@@ -26,3 +26,6 @@ copy_file(copyFrom, copyTo)
 copy_file(copyFromB, copyToB)
 
 copy_file(copyFromD, copyToD)
+# r = r'\r'
+# string = f'this is a string with {r} preserved'
+# print(string)
