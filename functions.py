@@ -2,6 +2,27 @@ import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
 import re
 
+def extract_checkbox_id(checkbox_element):
+    # Extract the id attribute value using regular expression
+    id_match = re.search(r'id=([^ ]+)', checkbox_element)
+
+    if id_match:
+        id_value = id_match.group(1)
+        return id_value
+    else:
+        return None
+    
+def search_substring_in_file(file_path, substring):
+    try:
+        with open(file_path, 'r') as file:
+            file_content = file.read()
+            if substring in file_content:
+                print(f"YAY - The substring '{substring}' was found in the file.")
+            else:
+                print(f"YAY - The substring '{substring}' was not found in the file.")
+    except FileNotFoundError:
+        print(f"File '{file_path}' not found.")
+
 def find_next_two_binding_ids(xml_file):
     '''This should find the next two available binding ids for the new element'''
 
@@ -156,15 +177,12 @@ def find_objectID(xml_file, target_id):
     for match in binding_matches:
         binding_id, binding_content = match
         if binding_id == target_id:
-            deleted_binding = binding_content + '</binding>'
+            deleted_binding = f'<binding ID="{binding_id}">{binding_content}</binding>'
             objectid_match = re.search(r'objectid="(\d+)"', binding_content)
             objectID = objectid_match.group(1)
 
     with open('deletedBindings.txt', 'w') as file:
         file.write(f"{deleted_binding}\n")
-
-    if objectID:
-        print(f"The associated objectid is: {', '.join(objectID)}")
 
     return objectID, deleted_binding
 
@@ -211,13 +229,34 @@ def get_point_name(datasource_file, target_id):
             point_name_match = re.search(r'<property name="PointRefPointName">(.*?)</property>', dataobject_content)
             if point_name_match:
                 point_name = point_name_match.group(1)
-                print(f"Deleted dataobject ID: {dataobject_id}\tPointFefPointName: {point_name}")
-                
+
     with open('deletedDataS.txt', 'w') as file:
         file.write(f"{deleted_dataobject}\n")
 
     return point_name, deleted_dataobject
 
+def insert_relinquish_script(file_path, string):
+    with open(file_path, 'r') as file:
+        file_content = file.readlines()
+
+    for i, line in enumerate(file_content):
+        if '<BODY' in line:
+            file_content[i] = line.lstrip()  # Remove leading whitespace
+            file_content.insert(i, string + '\n')
+            break
+
+    with open(file_path, 'w') as file:
+        file.writelines(file_content)
+
+def replace_string_in_file(file_path, old_string, new_string):
+    with open(file_path, 'r') as file:
+        file_content = file.read()
+
+    # Replace the old string with the new string
+    updated_content = file_content.replace(old_string, new_string)
+
+    with open(file_path, 'w') as file:
+        file.write(updated_content)
 
 # shape_name = 'shape033'
 # display_name = '2m-ahu2'
@@ -241,26 +280,19 @@ def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file
 	'''
 
     relinquish_body_string = f'''
-	<DIV tabIndex=-1 id={shape_name} class=hsc.shape.1 
-	style="FONT-SIZE: 0px; TEXT-DECORATION: none; HEIGHT: 18px; FONT-FAMILY: Arial; WIDTH: 16px; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: {left}; TOP: {top}; BEHAVIOR: url(#HSCShapeLinkBehavior) url(#HDXVectorFactory#shapelink)" 
-	hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Width:16;" 
-	value = "1" src = ".\{display_file}_files\relinquish_control.sha" parameters = 
-	"Point?PointName:{pointName};" linkType = "embedded" globalscripts = "" 
-	styleClass = "">
-		<DIV tabIndex=-1 id={shape_name}_relinquish_group class=hvg.group.1 
-		style="FONT-SIZE: 0pt; HEIGHT: 100%; WIDTH: 100%; POSITION: absolute; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#group); VISIBILITY: hidden" 
-		hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Width:16;">
-		
-		<TEXTAREA tabIndex=0 id={shape_name}_ModeState class=hsc.alpha.1 style="BORDER-TOP-STYLE: none; OVERFLOW: hidden; WORD-WRAP: normal; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; BORDER-BOTTOM-STYLE: none; POSITION: absolute; FONT-WEIGHT: 400; COLOR: #000000; FONT-STYLE: normal; TEXT-ALIGN: center; BORDER-RIGHT-STYLE: none; LEFT: 0%; BORDER-LEFT-STYLE: none; TOP: 0%; BEHAVIOR: url(#HDXAlphaBehavior) url(#BindingBehavior); VISIBILITY: hidden; BACKGROUND-COLOR: transparent; ROWS: 1" hdxproperties="fillColor:transparent;HDXBINDINGID:{HDXids[0]};lineColor:black;numericDisplayFormat:%.2f;textColor:#000000;">9999.99</TEXTAREA>
-		
-		<TEXTAREA tabIndex=0 id={shape_name}_RelinquishControl class=hsc.alpha.1 style="BORDER-TOP-STYLE: none; OVERFLOW: hidden; WORD-WRAP: normal; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; BORDER-BOTTOM-STYLE: none; POSITION: absolute; FONT-WEIGHT: 400; COLOR: #000000; FONT-STYLE: normal; TEXT-ALIGN: center; BORDER-RIGHT-STYLE: none; LEFT: 0%; BORDER-LEFT-STYLE: none; TOP: 0%; BEHAVIOR: url(#HDXAlphaBehavior) url(#BindingBehavior); VISIBILITY: hidden; BACKGROUND-COLOR: transparent; ROWS: 1" hdxproperties="fillColor:transparent;HDXBINDINGID:{HDXids[1]};lineColor:black;numericDisplayFormat:%.2f;textColor:#000000;">9999.99</TEXTAREA>
-		
-			<DIV tabIndex=-1 id={shape_name}_relinquish_icon class=hsc.image.1 
-			style="OVERFLOW: hidden; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#image)" 
-			hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Src:.\2m-ahu2_files\relinquish_control_files\relinquish_button.JPG;Width:16;" 
-			shapesrc=".\{display_file}_files\relinquish_control_files\relinquish_button.JPG"></DIV>
-		</DIV>
-	</DIV>
+    <DIV tabIndex=-1 id={shape_name} class=hsc.shape.1 
+    style="FONT-SIZE: 0px; TEXT-DECORATION: none; HEIGHT: 18px; FONT-FAMILY: Arial; WIDTH: 16px; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: {left}; TOP: {top}; BEHAVIOR: url(#HSCShapeLinkBehavior) url(#HDXVectorFactory#shapelink)" 
+    hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Width:16;" 
+    value = "1" src = ".\{display_file}_files\relinquish_control.sha" parameters = 
+    "Point?PointName:{pointName};" linkType = "embedded" globalscripts = "" 
+    styleClass = "">
+    <DIV tabIndex=-1 id={shape_name}_relinquish_group class=hvg.group.1 
+    style="FONT-SIZE: 0pt; HEIGHT: 100%; WIDTH: 100%; POSITION: absolute; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#group); VISIBILITY: hidden" 
+    hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Width:16;"><TEXTAREA tabIndex=0 id={shape_name}_ModeState class=hsc.alpha.1 style="BORDER-TOP-STYLE: none; OVERFLOW: hidden; WORD-WRAP: normal; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; BORDER-BOTTOM-STYLE: none; POSITION: absolute; FONT-WEIGHT: 400; COLOR: #000000; FONT-STYLE: normal; TEXT-ALIGN: center; BORDER-RIGHT-STYLE: none; LEFT: 0%; BORDER-LEFT-STYLE: none; TOP: 0%; BEHAVIOR: url(#HDXAlphaBehavior) url(#BindingBehavior); VISIBILITY: hidden; BACKGROUND-COLOR: transparent; ROWS: 1" hdxproperties="fillColor:transparent;HDXBINDINGID:{HDXids[0]};lineColor:black;numericDisplayFormat:%.2f;textColor:#000000;">9999.99</TEXTAREA><TEXTAREA tabIndex=0 id={shape_name}_RelinquishControl class=hsc.alpha.1 style="BORDER-TOP-STYLE: none; OVERFLOW: hidden; WORD-WRAP: normal; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; BORDER-BOTTOM-STYLE: none; POSITION: absolute; FONT-WEIGHT: 400; COLOR: #000000; FONT-STYLE: normal; TEXT-ALIGN: center; BORDER-RIGHT-STYLE: none; LEFT: 0%; BORDER-LEFT-STYLE: none; TOP: 0%; BEHAVIOR: url(#HDXAlphaBehavior) url(#BindingBehavior); VISIBILITY: hidden; BACKGROUND-COLOR: transparent; ROWS: 1" hdxproperties="fillColor:transparent;HDXBINDINGID:{HDXids[1]};lineColor:black;numericDisplayFormat:%.2f;textColor:#000000;">9999.99</TEXTAREA>
+    <DIV tabIndex=-1 id={shape_name}_relinquish_icon class=hsc.image.1 
+    style="OVERFLOW: hidden; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#image)"
+    hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Src:.\{display_file}_files\relinquish_control_files\relinquish_button.JPG;Width:16;" 
+    shapesrc=".\{display_file}_files\relinquish_control_files\relinquish_button.JPG"></DIV></DIV></DIV>
 	'''
 
     MS_relinquish_binding = f'''<binding ID="{HDXids[0]}"><dataobject ID="dso1" objectmodelid="datasource1" objecttype="HMIPage.Generic" objectid="{DOids[0]}"/><class ID="HSC.Alpha" refcount="1"/></binding>'''
@@ -271,17 +303,35 @@ def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file
 
     return relinquish_script_string, relinquish_body_string, MS_relinquish_binding, RC_relinquish_binding, MS_relinquish_dataS, RC_relinquish_dataS
 
+def get_auto_box(shape_name, pointName, HDXids, DOids, left, top, display_file):
+    auto_box_body = f'''
+    <DIV tabIndex=-1 id={shape_name} class="hsc.shape.1 hsc.shapeanimation.1" 
+    style="FONT-SIZE: 0px; TEXT-DECORATION: none; HEIGHT: 16px; FONT-FAMILY: Arial; WIDTH: 24px; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: {left}; TOP: {top}; BEHAVIOR: url(#HSCShapeLinkBehavior) url(#HSCShapeLinkBehavior#shapelinkanimator) url(#HDXFaceplateBehavior) url(#HDXVectorFactory#shapelink) url(#BindingBehavior)" 
+    hdxproperties="fillColorBlink:False;HDXBINDINGID:{HDXids[0]};Height:16;lineColorBlink:False;Width:24;" 
+    value = "1" src = ".\{display_file}_files\MBS_Hand-24Apr.sha" parameters = "" linkType 
+    = "embedded" globalscripts = "" styleClass = "" numberOfShapesAnimated = "2">
+	<DIV tabIndex=-1 id={shape_name}_textbox002 class=hvg.textbox.1 
+	style="OVERFLOW: hidden; FONT-SIZE: 8pt; HEIGHT: 100%; FONT-FAMILY: Tw Cen MT Condensed; WIDTH: 100%; POSITION: absolute; FONT-WEIGHT: normal; COLOR: #c0c0c0; FONT-STYLE: normal; TEXT-ALIGN: center; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#text)" 
+	hdxproperties="FillColor:#808080;fillColorBlink:False;FillStyle:0;Height:16;lineColorBlink:False;LineStyle:0;textColor:#c0c0c0;textColorBlink:False;TotalRotation:0;Width:24;" 
+	HDX_LOCK="-1">Auto</DIV></DIV>
+    '''
+    auto_box_binding = f'''<binding ID="{HDXids[0]}"><dataobject ID="dso1" objectmodelid="datasource1" objecttype="HMIPage.Generic" objectid="{DOids[0]}"/><class ID="HSC.Shapelink" refcount="1"/></binding>'''
+    auto_box_dataS = f'''<dataobject id="{DOids[0]}" type="HMIPage.Generic" format="propertybag"><property name="AddressFlags">1</property><property name="AddressType">0</property><property name="CalloutElement"></property><property name="ObjectType">0</property><property name="ParameterFormat">0</property><property name="PointRefFlags">0</property><property name="PointRefParamName">ModeState</property><property name="PointRefParamOffset">0</property><property name="PointRefPointName">{pointName}</property><property name="PresentationType">0</property><property name="SecurityLevel">0</property><property name="UpdatePeriod">0</property><property name="version">1.3</property></dataobject>'''
+
+    return auto_box_body, auto_box_binding, auto_box_dataS
+
+
 # Example usage
-html_file = 'checkingChanges2/afterChange.htm'
-info = extract_and_copy_checkboxes(html_file)
-print(f"{len(info)} Checkbox elements extracted and removed. Deleted elements saved in deletedElements.txt.")
+# html_file = 'checkingChanges2/afterChange.htm'
+# info = extract_and_copy_checkboxes(html_file)
+# print(f"{len(info)} Checkbox elements extracted and removed. Deleted elements saved in deletedElements.txt.")
 
-HDXIDs = [item[2] for item in info]
-bindingFile = 'checkingChanges2/afterChangeBindings.xml'
-objectIDs = find_and_copy_bindings(bindingFile, HDXIDs)
+# HDXIDs = [item[2] for item in info]
+# bindingFile = 'checkingChanges2/afterChangeBindings.xml'
+# objectIDs = find_and_copy_bindings(bindingFile, HDXIDs)
 
-datasourceFile = 'checkingChanges2/afterChangeDS.dsd'
-objectsFound = find_and_copy_dataobjects(datasourceFile, objectIDs)
+# datasourceFile = 'checkingChanges2/afterChangeDS.dsd'
+# objectsFound = find_and_copy_dataobjects(datasourceFile, objectIDs)
 
 # # Example usage
 # xml_file = 'checkingChanges2/afterChangeBindings.xml'  # Replace with your XML binding file
