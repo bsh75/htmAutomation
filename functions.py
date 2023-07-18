@@ -286,7 +286,7 @@ def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file
     <DIV tabIndex=-1 id={shape_name} class=hsc.shape.1 
     style="FONT-SIZE: 0px; TEXT-DECORATION: none; HEIGHT: 18px; FONT-FAMILY: Arial; WIDTH: 16px; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: {left}; TOP: {top}; BEHAVIOR: url(#HSCShapeLinkBehavior) url(#HDXVectorFactory#shapelink)" 
     hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Width:16;" 
-    value = "1" src = ".\{display_file}_files{r_slash}elinquish_control.sha" parameters = 
+    value = "1" src = ".\{display_file}{r_slash}elinquish_control.sha" parameters = 
     "Point?PointName:{pointName};" linkType = "embedded" globalscripts = "" 
     styleClass = "">
     <DIV tabIndex=-1 id={shape_name}_relinquish_group class=hvg.group.1 
@@ -294,8 +294,8 @@ def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file
     hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Width:16;"><TEXTAREA tabIndex=0 id={shape_name}_ModeState class=hsc.alpha.1 style="BORDER-TOP-STYLE: none; OVERFLOW: hidden; WORD-WRAP: normal; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; BORDER-BOTTOM-STYLE: none; POSITION: absolute; FONT-WEIGHT: 400; COLOR: #000000; FONT-STYLE: normal; TEXT-ALIGN: center; BORDER-RIGHT-STYLE: none; LEFT: 0%; BORDER-LEFT-STYLE: none; TOP: 0%; BEHAVIOR: url(#HDXAlphaBehavior) url(#BindingBehavior); VISIBILITY: hidden; BACKGROUND-COLOR: transparent; ROWS: 1" hdxproperties="fillColor:transparent;HDXBINDINGID:{HDXids[0]};lineColor:black;numericDisplayFormat:%.2f;textColor:#000000;">9999.99</TEXTAREA><TEXTAREA tabIndex=0 id={shape_name}_RelinquishControl class=hsc.alpha.1 style="BORDER-TOP-STYLE: none; OVERFLOW: hidden; WORD-WRAP: normal; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; BORDER-BOTTOM-STYLE: none; POSITION: absolute; FONT-WEIGHT: 400; COLOR: #000000; FONT-STYLE: normal; TEXT-ALIGN: center; BORDER-RIGHT-STYLE: none; LEFT: 0%; BORDER-LEFT-STYLE: none; TOP: 0%; BEHAVIOR: url(#HDXAlphaBehavior) url(#BindingBehavior); VISIBILITY: hidden; BACKGROUND-COLOR: transparent; ROWS: 1" hdxproperties="fillColor:transparent;HDXBINDINGID:{HDXids[1]};lineColor:black;numericDisplayFormat:%.2f;textColor:#000000;">9999.99</TEXTAREA>
     <DIV tabIndex=-1 id={shape_name}_relinquish_icon class=hsc.image.1 
     style="OVERFLOW: hidden; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#image)"
-    hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Src:.\{display_file}_files{r_slash}elinquish_control_files{r_slash}elinquish_button.JPG;Width:16;" 
-    shapesrc=".\{display_file}_files{r_slash}elinquish_control_files{r_slash}elinquish_button.JPG"></DIV></DIV></DIV>
+    hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Src:.\{display_file}{r_slash}elinquish_control_files{r_slash}elinquish_button.JPG;Width:16;" 
+    shapesrc=".\{display_file}{r_slash}elinquish_control_files{r_slash}elinquish_button.JPG"></DIV></DIV></DIV>
 	'''
 
     MS_relinquish_binding = f'''<binding ID="{HDXids[0]}"><dataobject ID="dso1" objectmodelid="datasource1" objecttype="HMIPage.Generic" objectid="{DOids[0]}"/><class ID="HSC.Alpha" refcount="1"/></binding>'''
@@ -311,7 +311,7 @@ def get_auto_box(shape_name, pointName, HDXids, DOids, left, top, display_file):
     <DIV tabIndex=-1 id={shape_name} class="hsc.shape.1 hsc.shapeanimation.1" 
     style="FONT-SIZE: 0px; TEXT-DECORATION: none; HEIGHT: 16px; FONT-FAMILY: Arial; WIDTH: 24px; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: {left}; TOP: {top}; BEHAVIOR: url(#HSCShapeLinkBehavior) url(#HSCShapeLinkBehavior#shapelinkanimator) url(#HDXFaceplateBehavior) url(#HDXVectorFactory#shapelink) url(#BindingBehavior)" 
     hdxproperties="fillColorBlink:False;HDXBINDINGID:{HDXids[0]};Height:16;lineColorBlink:False;Width:24;" 
-    value = "1" src = ".\{display_file}_files\MBS_Hand-24Apr.sha" parameters = "" linkType 
+    value = "1" src = ".\{display_file}\MBS_Hand-24Apr.sha" parameters = "" linkType 
     = "embedded" globalscripts = "" styleClass = "" numberOfShapesAnimated = "2">
 	<DIV tabIndex=-1 id={shape_name}_textbox002 class=hvg.textbox.1 
 	style="OVERFLOW: hidden; FONT-SIZE: 8pt; HEIGHT: 100%; FONT-FAMILY: Tw Cen MT Condensed; WIDTH: 100%; POSITION: absolute; FONT-WEIGHT: normal; COLOR: #c0c0c0; FONT-STYLE: normal; TEXT-ALIGN: center; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#text)" 
