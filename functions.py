@@ -23,7 +23,7 @@ def search_substring_in_file(file_path, substring):
     except FileNotFoundError:
         print(f"File '{file_path}' not found.")
 
-def find_next_two_binding_ids(xml_file):
+def find_next_three_binding_ids(xml_file):
     '''This should find the next two available binding ids for the new element'''
 
     # Parse the XML file
@@ -37,11 +37,11 @@ def find_next_two_binding_ids(xml_file):
     max_id = max(binding_ids) if binding_ids else -1
 
     # Determine the next free binding ID
-    next_ids = [max_id + 1, max_id + 2]
+    next_ids = [max_id + 1, max_id + 2, max_id + 3]
 
     return next_ids
 
-def find_next_two_object_ids(DS_file):
+def find_next_three_object_ids(DS_file):
     '''This should find the next two available maximum object ids for the new element'''
     with open(DS_file, 'r') as file:
         datasource_content = file.read()
@@ -50,7 +50,7 @@ def find_next_two_object_ids(DS_file):
     dataobject_ids = [int(id) for id in dataobject_ids]
 
     max_id = max(dataobject_ids) if dataobject_ids else 0
-    next_available_ids = [max_id + 1, max_id + 2]
+    next_available_ids = [max_id + 1, max_id + 2, max_id + 3]
 
     return next_available_ids
 # THESE ARE THE SAME JUST ONE FINDS LARGEST NUMBERS, OTHER FINDS NESTED FREE ONES
@@ -86,6 +86,24 @@ def find_next_available_shape_number(Dfile):
     
     return None  # Return None if all possible numbers are taken
 
+def find_next_available_shape_numbers(Dfile):
+    with open(Dfile, 'r') as file:
+        file_content = file.read()
+
+    pattern = r'shape(\d{3})'
+    shape_numbers = [int(match.group(1)) for match in re.finditer(pattern, file_content)]
+
+    next_numbers = []
+    # Find the next available numbers that are not present in the file
+    for i in range(1, 1000):
+        if i not in shape_numbers:
+            next_number_formatted = f"{i:03}"  # Format the number with 3 digits
+            next_numbers.append(f"shape{next_number_formatted}")
+            if len(next_numbers) == 2:
+                break
+
+    return next_numbers
+
 def find_checkbox_elements(html_content):
     '''Finds all the check box elements and returns a list of them'''
     pattern = r'<SPAN[^>]*class=hsc\.checkbox[^>]*>.*?Checkbox</SPAN></SPAN>'
@@ -118,6 +136,22 @@ def extract_checkbox_info(checkbox_content):
         infoDisplay = f"HDXBINDINGID: {binding_id}"
         infoData = [binding_id]
     return infoDisplay, infoData
+
+def adjust_position(position, amount):
+    if position.endswith('px'):
+        position_value = int(position[:-2])
+        adjusted_value = position_value + amount
+        adjusted_position = f"{adjusted_value}px"
+    elif position.endswith('%'):
+        position_value = float(position[:-1])
+        adjusted_value = position_value + amount
+        adjusted_position = f"{adjusted_value:.2f}%"
+    else:
+        # Invalid position format, return the original position
+        return position
+    
+    return adjusted_position
+
 
 def extract_and_copy_checkboxes(html_file):
     '''Finds all the check box elements and extracts all the relevant information about them as a list of [[LEFT, TOP, HDXid], ...]'''
@@ -258,7 +292,7 @@ def replace_string_in_file(file_path, old_string, new_string):
     # Replace the old string with the new string
     updated_content = file_content.replace(old_string, new_string)
 
-    with open(file_path, 'w') as file:
+    with open(file_path, 'w', encoding='utf-8') as file:
         file.write(updated_content)
 
 # shape_name = 'shape033'
@@ -270,7 +304,6 @@ def replace_string_in_file(file_path, old_string, new_string):
 
 def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file):
     '''Gets the string sections that correspond to the relinquish control element and embedds the relevant information'''
-
     relinquish_script_string = f'''
 	<SCRIPT language=VBScript for={shape_name}_relinquish_group defer event=onclick>on error resume next
 	{shape_name}_RelinquishControl.value = 1</SCRIPT>
@@ -279,8 +312,8 @@ def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file
 		{shape_name}_relinquish_group.style.visibility = "visible"
 	else
 		{shape_name}_relinquish_group.style.visibility = "hidden"
-	end if</SCRIPT>
-	'''
+	end if</SCRIPT>'''
+
     r_slash = r"\r"
     relinquish_body_string = f'''
     <DIV tabIndex=-1 id={shape_name} class=hsc.shape.1 
@@ -295,8 +328,7 @@ def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file
     <DIV tabIndex=-1 id={shape_name}_relinquish_icon class=hsc.image.1 
     style="OVERFLOW: hidden; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 100%; FONT-FAMILY: Arial; WIDTH: 100%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#image)"
     hdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Src:.\{display_file}{r_slash}elinquish_control_files{r_slash}elinquish_button.JPG;Width:16;" 
-    shapesrc=".\{display_file}{r_slash}elinquish_control_files{r_slash}elinquish_button.JPG"></DIV></DIV></DIV>
-	'''
+    shapesrc=".\{display_file}{r_slash}elinquish_control_files{r_slash}elinquish_button.JPG"></DIV></DIV></DIV>'''
 
     MS_relinquish_binding = f'''<binding ID="{HDXids[0]}"><dataobject ID="dso1" objectmodelid="datasource1" objecttype="HMIPage.Generic" objectid="{DOids[0]}"/><class ID="HSC.Alpha" refcount="1"/></binding>'''
     RC_relinquish_binding = f'''<binding ID="{HDXids[1]}"><dataobject ID="dso1" objectmodelid="datasource1" objecttype="HMIPage.Generic" objectid="{DOids[1]}"/><class ID="HSC.Alpha" refcount="1"/></binding>'''
@@ -310,35 +342,66 @@ def get_auto_box(shape_name, pointName, HDXids, DOids, left, top, display_file):
     auto_box_body = f'''
     <DIV tabIndex=-1 id={shape_name} class="hsc.shape.1 hsc.shapeanimation.1" 
     style="FONT-SIZE: 0px; TEXT-DECORATION: none; HEIGHT: 16px; FONT-FAMILY: Arial; WIDTH: 24px; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: {left}; TOP: {top}; BEHAVIOR: url(#HSCShapeLinkBehavior) url(#HSCShapeLinkBehavior#shapelinkanimator) url(#HDXFaceplateBehavior) url(#HDXVectorFactory#shapelink) url(#BindingBehavior)" 
-    hdxproperties="fillColorBlink:False;HDXBINDINGID:{HDXids[0]};Height:16;lineColorBlink:False;Width:24;" 
+    hdxproperties="fillColorBlink:False;HDXBINDINGID:{HDXids[2]};Height:16;lineColorBlink:False;Width:24;" 
     value = "1" src = ".\{display_file}\MBS_Hand-24Apr.sha" parameters = "" linkType 
     = "embedded" globalscripts = "" styleClass = "" numberOfShapesAnimated = "2">
 	<DIV tabIndex=-1 id={shape_name}_textbox002 class=hvg.textbox.1 
 	style="OVERFLOW: hidden; FONT-SIZE: 8pt; HEIGHT: 100%; FONT-FAMILY: Tw Cen MT Condensed; WIDTH: 100%; POSITION: absolute; FONT-WEIGHT: normal; COLOR: #c0c0c0; FONT-STYLE: normal; TEXT-ALIGN: center; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#text)" 
 	hdxproperties="FillColor:#808080;fillColorBlink:False;FillStyle:0;Height:16;lineColorBlink:False;LineStyle:0;textColor:#c0c0c0;textColorBlink:False;TotalRotation:0;Width:24;" 
-	HDX_LOCK="-1">Auto</DIV></DIV>
-    '''
+	HDX_LOCK="-1">Auto</DIV></DIV>'''
     
-    auto_box_binding = f'''<binding ID="{HDXids[0]}"><dataobject ID="dso1" objectmodelid="datasource1" objecttype="HMIPage.Generic" objectid="{DOids[0]}"/><class ID="HSC.Shapelink" refcount="1"/></binding>'''
+    auto_box_binding = f'''<binding ID="{HDXids[2]}"><dataobject ID="dso1" objectmodelid="datasource1" objecttype="HMIPage.Generic" objectid="{DOids[2]}"/><class ID="HSC.Shapelink" refcount="1"/></binding>'''
 
-    auto_box_dataS = f'''<dataobject id="{DOids[0]}" type="HMIPage.Generic" format="propertybag"><property name="AddressFlags">1</property><property name="AddressType">0</property><property name="CalloutElement"></property><property name="ObjectType">0</property><property name="ParameterFormat">0</property><property name="PointRefFlags">0</property><property name="PointRefParamName">ModeState</property><property name="PointRefParamOffset">0</property><property name="PointRefPointName">{pointName}</property><property name="PresentationType">0</property><property name="SecurityLevel">0</property><property name="UpdatePeriod">0</property><property name="version">1.3</property></dataobject>'''
+    auto_box_dataS = f'''<dataobject id="{DOids[2]}" type="HMIPage.Generic" format="propertybag"><property name="AddressFlags">1</property><property name="AddressType">0</property><property name="CalloutElement"></property><property name="ObjectType">0</property><property name="ParameterFormat">0</property><property name="PointRefFlags">0</property><property name="PointRefParamName">ModeState</property><property name="PointRefParamOffset">0</property><property name="PointRefPointName">{pointName}</property><property name="PresentationType">0</property><property name="SecurityLevel">0</property><property name="UpdatePeriod">0</property><property name="version">1.3</property></dataobject>'''
 
     return auto_box_body, auto_box_binding, auto_box_dataS
 
 
-# Example usage
-# html_file = 'checkingChanges2/afterChange.htm'
-# info = extract_and_copy_checkboxes(html_file)
-# print(f"{len(info)} Checkbox elements extracted and removed. Deleted elements saved in deletedElements.txt.")
 
-# HDXIDs = [item[2] for item in info]
-# bindingFile = 'checkingChanges2/afterChangeBindings.xml'
-# objectIDs = find_and_copy_bindings(bindingFile, HDXIDs)
+def extract_group_elements_from_file(input_file, output_file):
+    with open(input_file, 'r') as file:
+        html_content = file.read()
 
-# datasourceFile = 'checkingChanges2/afterChangeDS.dsd'
-# objectsFound = find_and_copy_dataobjects(datasourceFile, objectIDs)
+    # Find all opening <DIV> tags with 'tabIndex=-1' and 'id=group' attributes
+    opening_div_pattern = r'<DIV\s+tabIndex=-1\s+id=group\d{3}'
+    opening_div_matches = re.findall(opening_div_pattern, html_content)
+    print(opening_div_matches)
 
-# # Example usage
-# xml_file = 'checkingChanges2/afterChangeBindings.xml'  # Replace with your XML binding file
-# next_free_id = find_next_free_binding_id(xml_file)
-# print(f"The next free binding ID is: {next_free_id}")
+    # Initialize a list to store the extracted group elements
+    extracted_group_elements = []
+    group_content_list = []
+
+    # Loop through the opening <DIV> matches
+    for match in opening_div_matches:
+        start_index = html_content.find(match)
+
+        # Initialize a flag to keep track of nested <DIV> elements
+        nested_div_flag = 0
+
+        # Find the corresponding closing </DIV> for the current opening <DIV>
+        for i in range(start_index, len(html_content)):
+            if html_content[i:i+5] == '<DIV ':
+                # print("+1: ", nested_div_flag)
+                nested_div_flag += 1
+            if html_content[i:i+6] == '</DIV>':
+                # print("-1: ", nested_div_flag)
+                nested_div_flag -= 1
+                # Check if we have found the closing </DIV> for the current opening <DIV>
+                if nested_div_flag == 0:
+                    group_content = html_content[start_index:i+6]
+                    if 'id=checkbox' in group_content:
+                        group_content_list.append(group_content)
+                        elements = group_content + '\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+                        extracted_group_elements.append(elements)
+                    break
+
+    # Write the extracted group elements to the output file
+    with open(output_file, 'w') as file:
+        for element in extracted_group_elements:
+            file.write(element + '\n')
+
+    # Print the number of sections found
+    num_sections_found = len(extracted_group_elements)
+    print(f"Number of sections found: {num_sections_found}")
+
+    return group_content_list

@@ -12,7 +12,6 @@ def copy_file(source_file, destination_file):
 # copyFromB = 'checkingChanges2/DS-preManHtgChange.dsd'
 # copyToD = 'checkingChanges2/afterChangeDS.dsd'
 
-
 copyFrom = 'checkingChanges2/before.htm'
 copyTo = 'checkingChanges2/after.htm'
 copyFromB = 'checkingChanges2/before.xml'
