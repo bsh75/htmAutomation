@@ -1,5 +1,4 @@
 import xml.etree.ElementTree as ET
-from bs4 import BeautifulSoup
 import re
 
 def extract_checkbox_id(checkbox_element):
@@ -11,27 +10,22 @@ def extract_checkbox_id(checkbox_element):
         return id_value
     else:
         return None
-    
-def search_substring_in_file(file_path, substring):
-    try:
-        with open(file_path, 'r') as file:
-            file_content = file.read()
-            if substring in file_content:
-                print(f"YAY - The substring '{substring}' was found in the file.")
-            else:
-                print(f"YAY - The substring '{substring}' was not found in the file.")
-    except FileNotFoundError:
-        print(f"File '{file_path}' not found.")
 
-def find_next_three_binding_ids(xml_file):
+def find_next_three_binding_ids(xml_content):
     '''This should find the next two available binding ids for the new element'''
+    # Parse the XML content
+    root = ET.fromstring(xml_content)
 
-    # Parse the XML file
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
-
-    # Extract the binding IDs from the XML
-    binding_ids = [int(binding.attrib['ID']) for binding in root.findall('binding')]
+    # Extract the binding IDs from the XML, ignoring non-integer 'ID' attributes
+    binding_ids = []
+    for binding in root.findall('binding'):
+        binding_id_str = binding.attrib.get('ID')
+        if binding_id_str is not None:
+            try:
+                binding_id = int(binding_id_str)
+                binding_ids.append(binding_id)
+            except ValueError:
+                pass  # Ignore non-integer 'ID' attributes
 
     # Find the maximum binding ID
     max_id = max(binding_ids) if binding_ids else -1
@@ -41,11 +35,8 @@ def find_next_three_binding_ids(xml_file):
 
     return next_ids
 
-def find_next_three_object_ids(DS_file):
+def find_next_three_object_ids(datasource_content):
     '''This should find the next two available maximum object ids for the new element'''
-    with open(DS_file, 'r') as file:
-        datasource_content = file.read()
-
     dataobject_ids = re.findall(r'<dataobject id="(\d+)"', datasource_content)
     dataobject_ids = [int(id) for id in dataobject_ids]
 
@@ -53,28 +44,9 @@ def find_next_three_object_ids(DS_file):
     next_available_ids = [max_id + 1, max_id + 2, max_id + 3]
 
     return next_available_ids
-# THESE ARE THE SAME JUST ONE FINDS LARGEST NUMBERS, OTHER FINDS NESTED FREE ONES
-def find_next_free_object_ids(DS_file):
-    '''This should find the next two available object ids for the new element'''
-    with open(DS_file, 'r') as file:
-        datasource_content = file.read()
 
-    dataobject_ids = re.findall(r'<dataobject id="(\d+)"', datasource_content)
-    dataobject_ids = set(map(int, dataobject_ids))  # Convert to set for efficient lookup
-
-    next_available_ids = []
-    current_id = 1
-    while len(next_available_ids) < 2:
-        if current_id not in dataobject_ids:
-            next_available_ids.append(current_id)
-        current_id += 1
-
-    return next_available_ids
-
-def find_next_available_shape_number(Dfile):
-    with open(Dfile, 'r') as file:
-        file_content = file.read()
-
+def find_next_available_shape_number(file_content):
+    '''Finds the next 2 available shape numbers for auto and relinquish shapes'''
     pattern = r'shape(\d{3})'
     shape_numbers = [int(match.group(1)) for match in re.finditer(pattern, file_content)]
     
@@ -86,10 +58,7 @@ def find_next_available_shape_number(Dfile):
     
     return None  # Return None if all possible numbers are taken
 
-def find_next_available_shape_numbers(Dfile):
-    with open(Dfile, 'r') as file:
-        file_content = file.read()
-
+def find_next_available_shape_numbers(file_content):
     pattern = r'shape(\d{3})'
     shape_numbers = [int(match.group(1)) for match in re.finditer(pattern, file_content)]
 
@@ -102,7 +71,7 @@ def find_next_available_shape_numbers(Dfile):
             if len(next_numbers) == 2:
                 break
 
-    return next_numbers
+    return next_numbers[0], next_numbers[1]
 
 def find_checkbox_elements(html_content):
     '''Finds all the check box elements and returns a list of them'''
@@ -152,62 +121,8 @@ def adjust_position(position, amount):
     
     return adjusted_position
 
-
-def extract_and_copy_checkboxes(html_file):
-    '''Finds all the check box elements and extracts all the relevant information about them as a list of [[LEFT, TOP, HDXid], ...]'''
-    with open(html_file, 'r') as file:
-        html_content = file.read()
-
-    checkbox_matches = find_checkbox_elements(html_content)
-    deleted_elements = []
-    allInfo = []
-    for match in checkbox_matches:
-        deleted_elements.append(match+'\n')
-        infoDisplay, infoData = extract_checkbox_info(match)
-        allInfo.append(infoData)
-        print(infoDisplay)
-
-    with open('deletedElements.txt', 'w') as file:
-        for element in deleted_elements:
-            file.write(f"{element}\n")
-
-    return allInfo
-
-
-def find_and_copy_bindings(xml_file, target_ids):
+def find_objectID(xml_content, target_id):
     '''Copys all the bindings from xml with binding id's in "target_ids" and finds the corresponding object id's'''
-    with open(xml_file, 'r') as file:
-        xml_content = file.read()
-
-    pattern = r'<binding ID="(\d+)">(.*?)</binding>'
-    binding_matches = re.findall(pattern, xml_content, re.DOTALL)
-
-    deleted_bindings = []
-    associated_objectids = []
-
-    for match in binding_matches:
-        binding_id, binding_content = match
-        if binding_id in target_ids:
-            deleted_bindings.append(binding_content + '</binding>')
-
-            objectid_match = re.search(r'objectid="(\d+)"', binding_content)
-            if objectid_match:
-                associated_objectids.append(objectid_match.group(1))
-
-    with open('deletedBindings.txt', 'w') as file:
-        for binding in deleted_bindings:
-            file.write(f"{binding}\n")
-
-    if associated_objectids:
-        print(f"The associated objectids are: {', '.join(associated_objectids)}")
-
-    return associated_objectids
-
-def find_objectID(xml_file, target_id):
-    '''Copys all the bindings from xml with binding id's in "target_ids" and finds the corresponding object id's'''
-    with open(xml_file, 'r') as file:
-        xml_content = file.read()
-
     pattern = r'<binding ID="(\d+)">(.*?)</binding>'
     binding_matches = re.findall(pattern, xml_content, re.DOTALL)
 
@@ -218,42 +133,10 @@ def find_objectID(xml_file, target_id):
             objectid_match = re.search(r'objectid="(\d+)"', binding_content)
             objectID = objectid_match.group(1)
 
-    with open('deletedBindings.txt', 'w') as file:
-        file.write(f"{deleted_binding}\n")
-
     return objectID, deleted_binding
 
-def find_and_copy_dataobjects(datasource_file, target_ids):
-    '''Finds all datasource dataobjects with objectid in "target_ids" and copys them'''
-    with open(datasource_file, 'r') as file:
-        datasource_content = file.read()
-
-    pattern = r'<dataobject id="(\d+)"(.*?)</dataobject>'
-    dataobject_matches = re.findall(pattern, datasource_content, re.DOTALL)
-
-    deleted_dataobjects = []
-
-    for match in dataobject_matches:
-        dataobject_id, dataobject_content = match
-        if dataobject_id in target_ids:
-            deleted_dataobjects.append(f"<dataobject id=\"{dataobject_id}\"{dataobject_content}")
-            # Extract the PointRefPointName
-            point_name_match = re.search(r'<property name="PointRefPointName">(.*?)</property>', dataobject_content)
-            if point_name_match:
-                point_name = point_name_match.group(1)
-                print(f"Deleted dataobject ID: {dataobject_id}\tPointFefPointName: {point_name}")
-
-    with open('deletedDataS.txt', 'w') as file:
-        for dataobject in deleted_dataobjects:
-            file.write(f"{dataobject}\n")
-
-    return len(deleted_dataobjects)
-
-def get_point_name(datasource_file, target_id):
+def get_point_name(datasource_content, target_id):
     '''Removes datasource dataobjects with objectid in "target_ids" and saves their '''
-    with open(datasource_file, 'r') as file:
-        datasource_content = file.read()
-
     pattern = r'<dataobject id="(\d+)"(.*?)</dataobject>'
     dataobject_matches = re.findall(pattern, datasource_content, re.DOTALL)
 
@@ -266,41 +149,17 @@ def get_point_name(datasource_file, target_id):
             point_name_match = re.search(r'<property name="PointRefPointName">(.*?)</property>', dataobject_content)
             if point_name_match:
                 point_name = point_name_match.group(1)
-
-    with open('deletedDataS.txt', 'w') as file:
-        file.write(f"{deleted_dataobject}\n")
-
     return point_name, deleted_dataobject
 
-def insert_relinquish_script(file_path, string):
-    with open(file_path, 'r') as file:
-        file_content = file.readlines()
-
+def insert_relinquish_script(file_content, string):
+    '''Inserts the relinquish control script at top of file'''
     for i, line in enumerate(file_content):
         if '<BODY' in line:
             file_content[i] = line.lstrip()  # Remove leading whitespace
             file_content.insert(i, string + '\n')
             break
 
-    with open(file_path, 'w') as file:
-        file.writelines(file_content)
-
-def replace_string_in_file(file_path, old_string, new_string):
-    with open(file_path, 'r') as file:
-        file_content = file.read()
-
-    # Replace the old string with the new string
-    updated_content = file_content.replace(old_string, new_string)
-
-    with open(file_path, 'w', encoding='utf-8') as file:
-        file.write(updated_content)
-
-# shape_name = 'shape033'
-# display_name = '2m-ahu2'
-# left = 601
-# top = 492
-# pointName = '2M-AHU2-CV'
-# HDXids = [52, 54]
+    return file_content
 
 def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file):
     '''Gets the string sections that correspond to the relinquish control element and embedds the relevant information'''
@@ -355,53 +214,3 @@ def get_auto_box(shape_name, pointName, HDXids, DOids, left, top, display_file):
     auto_box_dataS = f'''<dataobject id="{DOids[2]}" type="HMIPage.Generic" format="propertybag"><property name="AddressFlags">1</property><property name="AddressType">0</property><property name="CalloutElement"></property><property name="ObjectType">0</property><property name="ParameterFormat">0</property><property name="PointRefFlags">0</property><property name="PointRefParamName">ModeState</property><property name="PointRefParamOffset">0</property><property name="PointRefPointName">{pointName}</property><property name="PresentationType">0</property><property name="SecurityLevel">0</property><property name="UpdatePeriod">0</property><property name="version">1.3</property></dataobject>'''
 
     return auto_box_body, auto_box_binding, auto_box_dataS
-
-
-
-def extract_group_elements_from_file(input_file, output_file):
-    with open(input_file, 'r') as file:
-        html_content = file.read()
-
-    # Find all opening <DIV> tags with 'tabIndex=-1' and 'id=group' attributes
-    opening_div_pattern = r'<DIV\s+tabIndex=-1\s+id=group\d{3}'
-    opening_div_matches = re.findall(opening_div_pattern, html_content)
-    print(opening_div_matches)
-
-    # Initialize a list to store the extracted group elements
-    extracted_group_elements = []
-    group_content_list = []
-
-    # Loop through the opening <DIV> matches
-    for match in opening_div_matches:
-        start_index = html_content.find(match)
-
-        # Initialize a flag to keep track of nested <DIV> elements
-        nested_div_flag = 0
-
-        # Find the corresponding closing </DIV> for the current opening <DIV>
-        for i in range(start_index, len(html_content)):
-            if html_content[i:i+5] == '<DIV ':
-                # print("+1: ", nested_div_flag)
-                nested_div_flag += 1
-            if html_content[i:i+6] == '</DIV>':
-                # print("-1: ", nested_div_flag)
-                nested_div_flag -= 1
-                # Check if we have found the closing </DIV> for the current opening <DIV>
-                if nested_div_flag == 0:
-                    group_content = html_content[start_index:i+6]
-                    if 'id=checkbox' in group_content:
-                        group_content_list.append(group_content)
-                        elements = group_content + '\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
-                        extracted_group_elements.append(elements)
-                    break
-
-    # Write the extracted group elements to the output file
-    with open(output_file, 'w') as file:
-        for element in extracted_group_elements:
-            file.write(element + '\n')
-
-    # Print the number of sections found
-    num_sections_found = len(extracted_group_elements)
-    print(f"Number of sections found: {num_sections_found}")
-
-    return group_content_list

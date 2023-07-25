@@ -5,7 +5,7 @@ def extract_group_elements_from_file(html_content):
     # Find all opening <DIV> tags with 'tabIndex=-1' and 'id=group' attributes
     opening_div_pattern = r'<DIV\s+tabIndex=-1\s+id=group\d{3}'
     opening_div_matches = re.findall(opening_div_pattern, html_content)
-    print(opening_div_matches)
+    # print(opening_div_matches)
 
     # Initialize a list to store the extracted group elements
     extracted_group_elements = []
@@ -37,7 +37,7 @@ def extract_group_elements_from_file(html_content):
 
     # Print the number of sections found
     num_sections_found = len(extracted_group_elements)
-    print(f"Number of sections found: {num_sections_found}")
+    # print(f"Number of sections found: {num_sections_found}")
 
     return group_content_list
 
@@ -101,22 +101,15 @@ def modify_group(group):
 
     return new_group_trimmed
 
-# Example usage:
-input_file = 'input.htm'  # Replace with the name of your input HTML file
-output_file = 'output.htm'  # Replace with the desired output file name
+def remove_groups(html_content):
+    """Removes the grouping related to checkbox elements"""
+    all_groups = extract_group_elements_from_file(html_content)
 
-with open(input_file, 'r') as file:
-    html_content = file.read()
+    all_separated_groups = []
 
-all_groups = extract_group_elements_from_file(html_content)
+    for group in all_groups:
+        all_separated_groups.append(modify_group(group))
 
-all_separated_groups = []
+    new_html_content = multiple_substitutions(html_content, all_groups, all_separated_groups)
 
-for group in all_groups:
-    all_separated_groups.append(modify_group(group))
-
-new_html_content = multiple_substitutions(html_content, all_groups, all_separated_groups)
-
-# Write the extracted group elements to the output file
-with open(output_file, 'w') as file:
-    file.write(new_html_content)
+    return new_html_content
