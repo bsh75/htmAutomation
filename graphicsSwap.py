@@ -17,6 +17,10 @@ num_files = len(htm_files)
 num_checkboxes = 0
 files_changed = []
 
+#################JUST ONE#################
+# htm_files = ['2m-ahu5.htm']
+#################JUST ONE#################
+
 # Now iterate through the .htm files
 for htm_file in htm_files:
     graphic = htm_file[0:-4]
@@ -40,7 +44,6 @@ for htm_file in htm_files:
 
     if len(check_boxes) == 0:
         print(f"NO CHECKBOXES FOUND in {graphic}")
-
     else:
         print(f"{len(check_boxes)} Checkboxes found in {graphic}")
         try:
@@ -123,5 +126,5 @@ for htm_file in htm_files:
 
 for file in files_changed:
     print(file)
-    
+
 print(f"A total of {num_checkboxes} checkboxes adjusted from {len(files_changed)}/{num_files} files changed")
