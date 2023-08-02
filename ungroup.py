@@ -1,9 +1,9 @@
 import re
 import math
 
-def extract_group_elements_from_file(html_content):
+def extract_group_elements(html_content):
     # Find all opening <DIV> tags with 'tabIndex=-1' and 'id=group' attributes
-    opening_div_pattern = r'<DIV\s+tabIndex=-1\s+id=group\d{3}'
+    opening_div_pattern = r'<DIV[^>]*id=group\d{3}'
     opening_div_matches = re.findall(opening_div_pattern, html_content)
     # print(opening_div_matches)
 
@@ -67,10 +67,11 @@ def modify_group(group):
     WIDTH = re.search(r'WIDTH:\s*([\d.]+)(%|px)', group).group()
     LEFT = re.search(r'LEFT:\s*([\d.]+)(%|px)', group).group()
     TOP = re.search(r'TOP:\s*([\d.]+)(%|px)', group).group()
-
+    error = False
     # Check if '%' is in HEIGHT, WIDTH, LEFT, or TOP
     if '%' in HEIGHT or '%' in WIDTH or '%' in LEFT or '%' in TOP:
-        print("Percentage found in at least one of HEIGHT, WIDTH, LEFT, or TOP.")
+        # print(f"Percentage found in at least one of HEIGHT, WIDTH, LEFT, or TOP of group:\n--------------------------------\n{group}\n-----------------------------------\n")
+        error = True
 
     all_heights = re.findall(r'HEIGHT:\s*([\d.]+)%', group)
     all_widths = re.findall(r'WIDTH:\s*([\d.]+)%', group)
@@ -99,17 +100,18 @@ def modify_group(group):
     new_group = multiple_substitutions(group, sub_out, sub_in)
     new_group_trimmed = remove_tags(new_group)
 
-    return new_group_trimmed
+    return new_group_trimmed, error
 
 def remove_groups(html_content):
     """Removes the grouping related to checkbox elements"""
-    all_groups = extract_group_elements_from_file(html_content)
-
-    all_separated_groups = []
-
-    for group in all_groups:
-        all_separated_groups.append(modify_group(group))
-
-    new_html_content = multiple_substitutions(html_content, all_groups, all_separated_groups)
-
-    return new_html_content
+    # Find all groups in hmtl_content (including nested) that contain a checkbox
+    all_groups = extract_group_elements(html_content)
+    error = False
+    
+    while len(all_groups) > 0:
+        group_to_change = all_groups[0]
+        new_group, error = modify_group(group_to_change)
+        html_content = html_content.replace(group_to_change, new_group)
+        all_groups = extract_group_elements(html_content)
+        
+    return html_content, error

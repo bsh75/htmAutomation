@@ -79,6 +79,75 @@ def find_checkbox_elements(html_content):
     checkbox_matches = re.findall(pattern, html_content, re.DOTALL)
     return checkbox_matches
 
+def find_patterns_with_bindingIDs(hdx_binding_ids, html_content):
+    pattern_textarea = r'<TEXTAREA\s+id=alpha\d+\s+[^>]* LEFT: ([\d.]+)(%|px)[^>]* TOP: ([\d.]+)(%|px)[^>]*HDXBINDINGID:(\d+)[^>]*>[^>]*</TEXTAREA>'
+    pattern_textarea2 = r'<TEXTAREA\s+[^>]* TOP: ([\d.]+)(%|px)[^>]* LEFT: ([\d.]+)(%|px)[^>]*id=alpha\d+\s+[^>]*HDXBINDINGID:(\d+)[^>]*>[^>]*</TEXTAREA>'
+    pattern_combobox = r'<SPAN\s+id=combobox\d+\s+[^>]* LEFT: ([\d.]+)(%|px)[^>]* TOP: ([\d.]+)(%|px)[^>]*HDXBINDINGID:(\d+)[^>]*>[^>]*</SPAN>'
+
+    matches_textarea = re.findall(pattern_textarea, html_content, re.DOTALL)
+    matches_textarea2 = re.findall(pattern_textarea2, html_content, re.DOTALL)
+    matches_combobox = re.findall(pattern_combobox, html_content, re.DOTALL)
+
+    # print(matches_textarea)
+    # print(matches_combobox)
+
+    found_patterns = []
+    for match in matches_textarea:
+        # print(f"MATCH: {match}")
+        left_value, left_unit, top_value, top_unit, binding_id = match
+        if binding_id in hdx_binding_ids:
+            found_patterns.append([left_value+left_unit, top_value+top_unit, 'Auto'])
+    
+    for match in matches_textarea2:
+        # print(f"MATCH: {match}")
+        top_value, top_unit, left_value, left_unit,  binding_id = match
+        if binding_id in hdx_binding_ids:
+            found_patterns.append([left_value+left_unit, top_value+top_unit, 'Auto'])
+
+    for match in matches_combobox:
+        # print(f"MATCH: {match}")
+        left_value, left_unit, top_value, top_unit, binding_id = match
+        if binding_id in hdx_binding_ids:
+            found_patterns.append([left_value+left_unit, top_value+top_unit, 'Combo'])
+    if len(found_patterns) > 1:
+        return None
+    else:
+        return found_patterns
+    
+def find_patterns_with_bindingIDs2(hdx_binding_ids, html_content):
+    pattern_textarea = r'<TEXTAREA[^>]*id=alpha\d+\s+[^>]*HDXBINDINGID:\d[^>]*>[^>]*</TEXTAREA>'
+    pattern_combobox = r'<SPAN[^>]*id=combobox\d+\s+[^>]*HDXBINDINGID:\d[^>]*>[^>]*</SPAN>'
+
+    matches_textarea = re.findall(pattern_textarea, html_content, re.DOTALL)
+    matches_combobox = re.findall(pattern_combobox, html_content, re.DOTALL)
+
+    pattern_HDX = r'[^>]*HDXBINDINGID:(\d+)[^>]*'
+    pattern_left = r'[^>]*\s+LEFT:\s+([\d.]+)(%|px)[^>]*'
+    pattern_top = r'[^>]*\s+TOP:\s+([\d.]+)(%|px)[^>]*'
+    # print(matches_textarea)
+    # print(matches_combobox)
+
+    found_patterns = []
+    for match in matches_textarea:
+        HDX_id = re.findall(pattern_HDX, match)
+        if HDX_id[0] in hdx_binding_ids:
+            left_value, left_unit = re.findall(pattern_left, match, re.DOTALL)[0]
+            top_value, top_unit = re.findall(pattern_top, match, re.DOTALL)[0]
+            # print(left_value, left_unit, top_value, top_unit)
+            if (left_unit == 'px') and (top_unit == 'px'): 
+                found_patterns.append([left_value+left_unit, top_value+top_unit, 'Auto'])
+
+    for match in matches_combobox:
+        HDX_id = re.findall(pattern_HDX, match)
+        if HDX_id[0] in hdx_binding_ids:
+            left_value, left_unit = re.findall(pattern_left, match, re.DOTALL)[0]
+            top_value, top_unit = re.findall(pattern_top, match, re.DOTALL)[0]
+            # print(left_value, left_unit, top_value, top_unit)
+            if (left_unit == 'px') and (top_unit == 'px'): 
+                found_patterns.append([left_value+left_unit, top_value+top_unit, 'Auto'])
+    
+    return found_patterns
+
 def extract_checkbox_info(checkbox_content):
     '''Extracts all the relevant information from a given checkbox: [LEFT, TOP, HDXid]'''
     left_match = re.search(r'LEFT:\s*([\d.]+)(%|px)', checkbox_content)
@@ -135,6 +204,21 @@ def find_objectID(xml_content, target_id):
 
     return objectID, deleted_binding
 
+def find_binding_IDs(xml_content, object_ids):
+    '''Copies all the bindings from xml with binding id's in "target_ids" and finds the corresponding object id's'''
+    pattern = r'<binding ID="(\d+)">(.*?)</binding>'
+    binding_matches = re.findall(pattern, xml_content, re.DOTALL)
+    found_binding_IDs = []
+    for match in binding_matches:
+        binding_id, binding_content = match
+        objectid_match = re.search(r'objectid="(\d+)"', binding_content)
+        if objectid_match:
+            objectID = objectid_match.group(1)
+            if int(objectID) in object_ids:
+                found_binding_IDs.append(binding_id)
+
+    return found_binding_IDs
+
 def get_point_name(datasource_content, target_id):
     '''Removes datasource dataobjects with objectid in "target_ids" and saves their '''
     pattern = r'<dataobject id="(\d+)"(.*?)</dataobject>'
@@ -150,6 +234,24 @@ def get_point_name(datasource_content, target_id):
             if point_name_match:
                 point_name = point_name_match.group(1)
     return point_name, deleted_dataobject
+
+def get_dataobject_ids_by_point_name(datasource_content, point_name):
+    '''Finds all dataobject IDs with a given point_name in the datasource_content'''
+    pattern = r'<dataobject id="(\d+)"(.*?)</dataobject>'
+    dataobject_matches = re.findall(pattern, datasource_content, re.DOTALL)
+
+    matching_ids = []
+    for match in dataobject_matches:
+        dataobject_id, dataobject_content = match
+
+        # Extract the PointRefPointName
+        point_name_match = re.search(r'<property name="PointRefPointName">(.*?)</property>', dataobject_content)
+        if point_name_match:
+            found_point_name = point_name_match.group(1)
+            if found_point_name == point_name:
+                matching_ids.append(int(dataobject_id))
+
+    return matching_ids
 
 def insert_relinquish_script(file_content, string):
     '''Inserts the relinquish control script at top of file'''

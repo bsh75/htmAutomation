@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import os
 from functions import *
 from ungroup import remove_groups
+import math
 
 # Folders containing graphics
 originals_folder = 'Untouched abstract'
@@ -16,14 +17,23 @@ htm_files = [file for file in files if file.endswith(".htm")]
 num_files = len(htm_files)
 num_checkboxes = 0
 files_changed = []
+files_to_check = []
+double_grouping_suspected = []
+file_we_checking = ['2m-ahu1', 'b-ahu1_setpoints', 'b-ahu1_setpointsold', 'b-ahu2_setpoints2', 'B-ahu2_vav_list', 'Front Of House Offices', 'Mem Lounge', 'OSF-FLOORPLAN1', 'PCR1old', 'PCR2old']
+# file_we_checking = ['2m-fans']
+# Global params
+BOX_to_Auto = -26
+BOX_to_Relinq = 76
 
 #################JUST ONE#################
-# htm_files = ['2m-ahu5.htm']
+# htm_files = ['ahu16.htm']
 #################JUST ONE#################
 
 # Now iterate through the .htm files
 for htm_file in htm_files:
     graphic = htm_file[0:-4]
+    if graphic not in file_we_checking:
+        continue
     displayFolder = f'{graphic}_files'
     DISPLAYfile_o = f'{originals_folder}/{graphic}.htm'
     DSfile_o = f'{originals_folder}/{displayFolder}/DS_datasource1.dsd'
@@ -37,7 +47,10 @@ for htm_file in htm_files:
     with open(DISPLAYfile_o, 'r') as file:
         htm_contents_g = file.read()
     # Removes the grouping involved with the checkbox elements
-    htm_contents = remove_groups(htm_contents_g)
+    htm_contents, error = remove_groups(htm_contents_g)
+    if error:
+        double_grouping_suspected.append(graphic)
+
     # Finds all the checkbox elemets
     check_boxes = find_checkbox_elements(htm_contents)
     num_checkboxes += len(check_boxes)
@@ -65,10 +78,6 @@ for htm_file in htm_files:
             # Get checkbox to replace
             checkBox = check_boxes[i]
             checkBoxName = extract_checkbox_id(checkBox)
-            # print(f"Checkbox Name: {checkBoxName}")
-            # if 'Man' in checkBoxName:
-            #     print('Mancheck, continue')
-            #     continue
 
             # Find new names for created shapes for Autobox and Relinquish
             shapeAuto, shapeRelinq = find_next_available_shape_numbers(htm_contents)
@@ -78,17 +87,55 @@ for htm_file in htm_files:
             infoDisplay, infoData = extract_checkbox_info(checkBox)
             CB_LEFT = infoData[0]
             CB_TOP = infoData[1]
-            auto_left = adjust_position(CB_LEFT, 0)
-            auto_top = adjust_position(CB_TOP, 4)
-            relinquish_left = adjust_position(CB_LEFT, 102)
-            relinquish_top = adjust_position(CB_TOP, 4)
-            CB_bindingID = infoData[2] 
+            # print(CB_LEFT, "----", CB_TOP)
+            # auto_left = adjust_position(CB_LEFT, 0)
+            # auto_top = adjust_position(CB_TOP, 4)
+            # relinquish_left = adjust_position(CB_LEFT, 102)
+            # relinquish_top = adjust_position(CB_TOP, 4)
+            # print(f"AutoL: {auto_left}, AutoT: {auto_top}\nRelL: {relinquish_left} RelT: {relinquish_top}")
+            CB_bindingID = infoData[2]
 
             # Get find the binding object
             CB_objectID, binding_to_delete = find_objectID(b_contents, CB_bindingID)
 
             # Find the datasource object and corresponding point name
             pointName, DS_object_to_delete = get_point_name(ds_contents, CB_objectID)
+
+            # Now reverse process to find the position of other objects with the same point name
+            other_object_IDs_same_point = get_dataobject_ids_by_point_name(ds_contents, pointName)
+            # print(f"pointname: {pointName} has DS IDs: {other_object_IDs_same_point}")
+            other_binding_IDs = find_binding_IDs(b_contents, other_object_IDs_same_point)
+            # print(f"pointname: {pointName} has DS IDs: {other_object_IDs_same_point} has HDX IDs: {other_binding_IDs}")
+            patterns_list = find_patterns_with_bindingIDs2(other_binding_IDs, htm_contents)
+            if len(patterns_list) < 1:
+                if graphic not in files_to_check:
+                    files_to_check.append(graphic)
+            first = True
+            for pattern in patterns_list:
+                patternL, patternT, pattern_type = pattern
+                L_diff = int(patternL[:-2]) - int(CB_LEFT[:-2]) + BOX_to_Auto
+                T_diff =  int(patternT[:-2]) - int(CB_TOP[:-2])
+                diff_score = math.sqrt(L_diff**2 + T_diff**2)
+                if first:
+                    closest_L = patternL
+                    closest_T = patternT
+                    diff_score_best = diff_score
+                    first = False
+                elif diff_score < diff_score_best:
+                    closest_L = patternL
+                    closest_T = patternT
+                    diff_score_best = diff_score
+            
+            # print(f"Of {patterns_list}, the closet coords to ({CB_LEFT}, {CB_TOP}) are LEFT:{closest_L}, TOP:{closest_T}")
+
+                
+            # TOP should be +1, AutoL should be - 26, RelL should be + 76 from other element.
+            auto_left = adjust_position(closest_L, BOX_to_Auto)
+            auto_top = adjust_position(closest_T, 1)
+            relinquish_left = adjust_position(closest_L, BOX_to_Relinq)
+            relinquish_top = adjust_position(closest_T, 1)
+            # print(f"AutoL: {auto_left}, AutoT: {auto_top},  RelL: {relinquish_left} RelT: {relinquish_top}")
+
 
             # Find the next available binding and object IDs
             HDXids = find_next_three_binding_ids(b_contents)
@@ -128,3 +175,5 @@ for file in files_changed:
     print(file)
 
 print(f"A total of {num_checkboxes} checkboxes adjusted from {len(files_changed)}/{num_files} files changed")
+print(f"Shoud have a look at {len(files_to_check)} files: {files_to_check}")
+print(f"Double grouping suspected in {len(double_grouping_suspected)} files: {double_grouping_suspected}")
