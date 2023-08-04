@@ -1,5 +1,7 @@
 import xml.etree.ElementTree as ET
 import re
+import shutil
+import os
 
 def extract_checkbox_id(checkbox_element):
     # Extract the id attribute value using regular expression
@@ -116,11 +118,11 @@ def find_patterns_with_bindingIDs(hdx_binding_ids, html_content):
     
 def find_patterns_with_bindingIDs2(hdx_binding_ids, html_content):
     pattern_textarea = r'<TEXTAREA[^>]*id=alpha\d+\s+[^>]*HDXBINDINGID:\d[^>]*>[^>]*</TEXTAREA>'
-    pattern_combobox = r'<SPAN[^>]*id=combobox\d+\s+[^>]*HDXBINDINGID:\d[^>]*>[^>]*</SPAN>'
+    pattern_combobox = r'<SPAN[^>]*class=hsc.combo[^>]*HDXBINDINGID:\d[^>]*>[^>]*</SPAN>'
 
     matches_textarea = re.findall(pattern_textarea, html_content, re.DOTALL)
     matches_combobox = re.findall(pattern_combobox, html_content, re.DOTALL)
-
+    # print(matches_textarea, matches_combobox)
     pattern_HDX = r'[^>]*HDXBINDINGID:(\d+)[^>]*'
     pattern_left = r'[^>]*\s+LEFT:\s+([\d.]+)(%|px)[^>]*'
     pattern_top = r'[^>]*\s+TOP:\s+([\d.]+)(%|px)[^>]*'
@@ -130,7 +132,9 @@ def find_patterns_with_bindingIDs2(hdx_binding_ids, html_content):
     found_patterns = []
     for match in matches_textarea:
         HDX_id = re.findall(pattern_HDX, match)
+        # print(f"HDX_id in pattern: {HDX_id}")
         if HDX_id[0] in hdx_binding_ids:
+            # print("Match found")
             left_value, left_unit = re.findall(pattern_left, match, re.DOTALL)[0]
             top_value, top_unit = re.findall(pattern_top, match, re.DOTALL)[0]
             # print(left_value, left_unit, top_value, top_unit)
@@ -140,6 +144,7 @@ def find_patterns_with_bindingIDs2(hdx_binding_ids, html_content):
     for match in matches_combobox:
         HDX_id = re.findall(pattern_HDX, match)
         if HDX_id[0] in hdx_binding_ids:
+            # print("Match found")
             left_value, left_unit = re.findall(pattern_left, match, re.DOTALL)[0]
             top_value, top_unit = re.findall(pattern_top, match, re.DOTALL)[0]
             # print(left_value, left_unit, top_value, top_unit)
@@ -263,6 +268,60 @@ def insert_relinquish_script(file_content, string):
 
     return file_content
 
+def copy_folder(source_folder, destination_folder):
+    try:
+        # Extract the base folder name from the source path
+        folder_name = os.path.basename(source_folder)
+        
+        # Create a new folder in the destination with the same name as the source folder
+        destination_folder_path = os.path.join(destination_folder, folder_name)
+        shutil.copytree(source_folder, destination_folder_path)
+        
+        print(f"Folder '{source_folder}' copied to '{destination_folder_path}' successfully.")
+    except FileNotFoundError:
+        print(f"Error: Source folder '{source_folder}' not found.")
+    except FileExistsError:
+        print(f"Error: Destination folder '{destination_folder_path}' already exists.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def copy_file(source_file, destination_folder):
+    try:
+        # Extract the file name from the source path
+        file_name = os.path.basename(source_file)
+
+        # Create the destination path by joining the destination folder and the file name
+        destination_file = os.path.join(destination_folder, file_name)
+
+        # Copy the file to the destination folder
+        shutil.copy(source_file, destination_file)
+
+        print(f"File '{source_file}' copied to '{destination_file}' successfully.")
+    except FileNotFoundError:
+        print(f"Error: Source file '{source_file}' not found.")
+    except FileExistsError:
+        print(f"Error: Destination file '{destination_file}' already exists.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def find_files_in_folders(starting_directory, filename1, filename2):
+    for root, _, files in os.walk(starting_directory):
+        if filename1 in files and filename2 in files:
+            file1_path = os.path.join(root, filename1)
+            file2_path = os.path.join(root, filename2)
+            return file1_path, file2_path
+
+    return None, None
+
+def find_folders_in_folders(starting_directory, foldername1, foldername2):
+    for root, dirs, _ in os.walk(starting_directory):
+        if foldername1 in dirs and foldername2 in dirs:
+            folder1_path = os.path.join(root, foldername1)
+            folder2_path = os.path.join(root, foldername2)
+            return folder1_path, folder2_path
+
+    return None, None
+
 def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file):
     '''Gets the string sections that correspond to the relinquish control element and embedds the relevant information'''
     relinquish_script_string = f'''
@@ -302,12 +361,12 @@ def get_relinquish(shape_name, pointName, HDXids, DOids, left, top, display_file
 def get_auto_box(shape_name, pointName, HDXids, DOids, left, top, display_file):
     auto_box_body = f'''
     <DIV tabIndex=-1 id={shape_name} class="hsc.shape.1 hsc.shapeanimation.1" 
-    style="FONT-SIZE: 0px; TEXT-DECORATION: none; HEIGHT: 16px; FONT-FAMILY: Arial; WIDTH: 24px; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: {left}; TOP: {top}; BEHAVIOR: url(#HSCShapeLinkBehavior) url(#HSCShapeLinkBehavior#shapelinkanimator) url(#HDXFaceplateBehavior) url(#HDXVectorFactory#shapelink) url(#BindingBehavior)" 
+    style="FONT-SIZE: 0px; TEXT-DECORATION: none; HEIGHT: 16px; FONT-FAMILY: Arial; WIDTH: 24px; POSITION: absolute; Z-INDEX: 1; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: {left}; TOP: {top}; BEHAVIOR: url(#HSCShapeLinkBehavior) url(#HSCShapeLinkBehavior#shapelinkanimator) url(#HDXFaceplateBehavior) url(#HDXVectorFactory#shapelink) url(#BindingBehavior)" 
     hdxproperties="fillColorBlink:False;HDXBINDINGID:{HDXids[2]};Height:16;lineColorBlink:False;Width:24;" 
     value = "1" src = ".\{display_file}\MBS_Hand-24Apr.sha" parameters = "" linkType 
     = "embedded" globalscripts = "" styleClass = "" numberOfShapesAnimated = "2">
 	<DIV tabIndex=-1 id={shape_name}_textbox002 class=hvg.textbox.1 
-	style="OVERFLOW: hidden; FONT-SIZE: 8pt; HEIGHT: 100%; FONT-FAMILY: Tw Cen MT Condensed; WIDTH: 100%; POSITION: absolute; FONT-WEIGHT: normal; COLOR: #c0c0c0; FONT-STYLE: normal; TEXT-ALIGN: center; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#text)" 
+	style="OVERFLOW: hidden; FONT-SIZE: 8pt; HEIGHT: 100%; FONT-FAMILY: Tw Cen MT Condensed; WIDTH: 100%; POSITION: absolute; Z-INDEX: 1; FONT-WEIGHT: normal; COLOR: #c0c0c0; FONT-STYLE: normal; TEXT-ALIGN: center; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#text)" 
 	hdxproperties="FillColor:#808080;fillColorBlink:False;FillStyle:0;Height:16;lineColorBlink:False;LineStyle:0;textColor:#c0c0c0;textColorBlink:False;TotalRotation:0;Width:24;" 
 	HDX_LOCK="-1">Auto</DIV></DIV>'''
     
