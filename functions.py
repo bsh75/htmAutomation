@@ -199,9 +199,9 @@ def find_objectID(xml_content, target_id):
     '''Copys all the bindings from xml with binding id's in "target_ids" and finds the corresponding object id's'''
     pattern = r'<binding ID="(\d+)">(.*?)</binding>'
     binding_matches = re.findall(pattern, xml_content, re.DOTALL)
-
     for match in binding_matches:
         binding_id, binding_content = match
+        # print(binding_id)
         if binding_id == target_id:
             deleted_binding = f'<binding ID="{binding_id}">{binding_content}</binding>'
             objectid_match = re.search(r'objectid="(\d+)"', binding_content)

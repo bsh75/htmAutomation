@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
 import os
 from functions import *
-from ungroup import remove_groups, get_parent_parameters
+from ungroup import remove_groups, remove_groups2
 import math
 
 # Folders containing graphics
@@ -22,14 +22,15 @@ files_to_check = []
 double_grouping_suspected = []
 # file_we_checking = ['2m-ahu1', 'b-ahu1_setpoints', 'b-ahu1_setpointsold', 'b-ahu2_setpoints2', 'B-ahu2_vav_list', 'OSF-FLOORPLAN1']
 
-file_we_checking = ['2m-ahu1', '2m-ahu1_setpoints']
+file_we_checking = ['2m-ahu1', '2m-ahu1_setpoints', '2m-fans', 'ahu03']
+
 # Global params
 autoAdjustor = 0 # Shifts the autobox by 7 pixels
 BOX_to_Auto = -26
 BOX_to_Relinq = 76
 
 #################JUST ONE#################
-# htm_files = ['ahu16.htm']
+htm_files = ['ahu01.htm']
 #################JUST ONE#################
 
 # Find a path to relinquish and MBS_hand folders to copy into other support folders
@@ -55,7 +56,9 @@ for htm_file in htm_files:
     with open(DISPLAYfile_o, 'r') as file:
         htm_contents_g = file.read()
     # Removes the grouping involved with the checkbox elements
-    htm_contents, error = remove_groups(htm_contents_g)
+    htm_contents, error = remove_groups2(htm_contents_g)
+    with open("play.htm", "w") as f:
+        f.write(htm_contents)
     # if htm_contents == htm_contents_g:
     #     print("\n\n\n\n\n\n\nnothing changed")
     if error:
@@ -63,6 +66,7 @@ for htm_file in htm_files:
 
     # Finds all the checkbox elemets
     check_boxes = find_checkbox_elements(htm_contents)
+    # print(check_boxes)
     num_checkboxes += len(check_boxes)
 
     if len(check_boxes) == 0:
@@ -94,9 +98,12 @@ for htm_file in htm_files:
         shapes_added = []
 
         for i in range(0, len(check_boxes)): #change to len(check_boxes)
-            nested = False
             # Get checkbox to replace
             checkBox = check_boxes[i]
+            # print(checkBox)
+            # if 'HDXBINDINGID:26' in checkBox:
+            #     print("WHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATTTTTT")
+            # print("\n\nCHECKBOX::::::::::\n", checkBox, "CHECKBOX::::::::::----------------------------------------")
             # print(checkBox)
             checkBoxName = extract_checkbox_id(checkBox)
 
@@ -106,19 +113,20 @@ for htm_file in htm_files:
             
             # Get important information from checkbox element
             infoDisplay, infoData = extract_checkbox_info(checkBox)
-            print(infoData)
+            # print(infoData)
             CB_LEFT = infoData[0]
             CB_TOP = infoData[1]
             CB_bindingID = infoData[2]
-            element_to_check = checkBox
-            if '%' in infoData[0]:
-                nested = True
-                global_coords = get_parent_parameters(element_to_check, htm_contents, infoData)
-                print(global_coords)
-                CB_LEFT = global_coords[0]
-                CB_TOP = global_coords[1]
+            # element_to_check = checkBox
+            # if '%' in infoData[0]:
+            #     nested = True
+            #     global_coords = get_parent_parameters(element_to_check, htm_contents, infoData)
+            #     print(global_coords)
+            #     CB_LEFT = global_coords[0]
+            #     CB_TOP = global_coords[1]
 
             # Get find the binding object
+            print(f"{checkBoxName}: with hdxbid: {CB_bindingID}")
             CB_objectID, binding_to_delete = find_objectID(b_contents, CB_bindingID)
 
             # Find the datasource object and corresponding point name
@@ -143,6 +151,7 @@ for htm_file in htm_files:
                 first = True
                 for pattern in coordinates_list:
                     patternL, patternT, pattern_type = pattern
+                    print(patternL, patternT, pattern_type, CB_LEFT)
                     L_diff = int(patternL[:-2]) - int(CB_LEFT[:-2]) + BOX_to_Auto
                     T_diff =  int(patternT[:-2]) - int(CB_TOP[:-2])
                     diff_score = math.sqrt(L_diff**2 + T_diff**2)
@@ -162,12 +171,12 @@ for htm_file in htm_files:
                 relinquish_left = adjust_position(closest_L, BOX_to_Relinq)
                 relinquish_top = adjust_position(closest_T, 1)
 
-            # if '-RT' in pointName:
-            #     auto_left = adjust_position(auto_left, 18-autoAdjustor)
-            #     relinquish_left = adjust_position(relinquish_left, 31)
+            if '-RT' in pointName:
+                auto_left = adjust_position(auto_left, 18-autoAdjustor)
+                relinquish_left = adjust_position(relinquish_left, 31)
 
-            # if pointName.endswith('-SP') and 'setpoints' in graphic:
-            #     relinquish_left = adjust_position(relinquish_left, 100)
+            if pointName.endswith('-SP') and 'setpoints' in graphic:
+                relinquish_left = adjust_position(relinquish_left, 100)
 
             # if pointName.endswith('AD'):
             #     # shift both items right a few pixels
@@ -186,14 +195,9 @@ for htm_file in htm_files:
             DS_objects_to_add = MS_relinquish_dataS + RC_relinquish_dataS + autoBoxDSD
             bindings_to_add = MS_relinquish_binding + RC_relinquish_binding + autoBoxXML
 
-            print(HTM_elements_to_add)
             # HTM file changes
             htm_contents = insert_relinquish_script(htm_contents, relinquish_script_string)
-            if nested:
-                htm_contents = htm_contents.replace(checkBox, '')
-                htm_contents = htm_contents[:-21] + HTM_elements_to_add + htm_contents[-21:]
-            else:
-                htm_contents = htm_contents.replace(checkBox, HTM_elements_to_add)
+            htm_contents = htm_contents.replace(checkBox, HTM_elements_to_add)
             with open(new_DISPLAYfile, 'w', encoding='utf-8') as new_file:
                 new_file.write(htm_contents)
 
