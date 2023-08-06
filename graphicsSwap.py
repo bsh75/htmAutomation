@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
 import os
 from functions import *
-from ungroup import remove_groups, remove_groups2
+from ungroup import remove_groups2
 import math
 
 # Folders containing graphics
@@ -30,7 +30,7 @@ BOX_to_Auto = -26
 BOX_to_Relinq = 76
 
 #################JUST ONE#################
-htm_files = ['ahu01.htm']
+# htm_files = ['ahu01.htm']
 #################JUST ONE#################
 
 # Find a path to relinquish and MBS_hand folders to copy into other support folders

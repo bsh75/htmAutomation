@@ -1,11 +1,13 @@
 import re
 import math
 
-def extract_group_elements(html_content):
+def extract_group_elements(html_content, checkbox_in_matters):
     # Find all opening <DIV> tags with 'tabIndex=-1' and 'id=group' attributes
     opening_div_pattern = r'<DIV[^>]*class=hvg.group.1'
     opening_div_matches = re.findall(opening_div_pattern, html_content)
     # print(opening_div_matches)
+    # if flag:
+    #     print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Opening div matcehs\n', opening_div_matches, '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n')
 
     # Initialize a list to store the extracted group elements
     extracted_group_elements = []
@@ -29,10 +31,16 @@ def extract_group_elements(html_content):
                 # Check if we have found the closing </DIV> for the current opening <DIV>
                 if nested_div_flag == 0:
                     group_content = html_content[start_index:i+6]
-                    if 'id=checkbox' in group_content:
+                    if checkbox_in_matters:
+                        if ('id=checkbox' in group_content):
+                            group_content_list.append(group_content)
+                            elements = group_content + '\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
+                            extracted_group_elements.append(elements)
+                    else:
                         group_content_list.append(group_content)
                         elements = group_content + '\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n'
                         extracted_group_elements.append(elements)
+
                     break
 
     # Print the number of sections found
@@ -128,6 +136,11 @@ def format_for_sub2(value, PARAM, unit):
     return new_string
 
 def modify_group2(group):
+    in_question = False
+    if 'checkbox046' in group:
+        in_question = True
+    #     print('-----------------------------------------------------------------------------------------------------GROUP', group, '-------------------------------------------------------------------------------------------------->')
+
     # Modifies all the elements in a group except for those that are within a nested group
     height_pattern = r' HEIGHT:\s*([\d.]+)\s*(%|px)'
     width_pattern = r' WIDTH:\s*([\d.]+)\s*(%|px)'
@@ -141,7 +154,7 @@ def modify_group2(group):
     WIDTH = re.search(width_pattern, group).group()
     LEFT = re.search(left_pattern, group).group()
     TOP = re.search(top_pattern, group).group()
-    print(f'Parent values: {HEIGHT}, {WIDTH}, {LEFT}, {TOP}')
+    # print(f'Parent values: {HEIGHT}, {WIDTH}, {LEFT}, {TOP}')
     error = False
     
     # print(HEIGHT)
@@ -152,16 +165,23 @@ def modify_group2(group):
 
     # Check for subgroups and remove the subgroup from what we are modifying
 
-    subgroups = extract_group_elements(group)
+    subgroups = extract_group_elements(group, checkbox_in_matters=False)[1:]
+    # if in_question:
+    #     print('+++++++++++++++++++++++++SG_InQ\n', subgroups, '\n++++++++++++++++++^^^^^^^^^^^^^^^^^^^^\n\n')
+
+
     subgroups_removed = []
-    if len(subgroups) > 1:
-        for i in range(1, len(subgroups)):
+    if len(subgroups) > 0:
+        for i in range(0, len(subgroups)):
             if subgroups[i] in group:
                 group = group.replace(subgroups[i], f'\n\nPLACEHOLDERs FOR SUBGROUPs\n\n')
                 subgroups_removed.append(subgroups[i])
         items_being_modified = group
     else:
         items_being_modified = group
+
+    # if in_question:
+    #     print('+++++++++++++++++++++++++Subss removed\n', subgroups_removed, '\n++++++++++++++++++^^^^^^^^^^^^^^^^^^^^\n\n')
 
     # print(items_being_modified)
     all_heights = [match[0] for match in (re.findall(height_pattern, items_being_modified))]
@@ -197,10 +217,10 @@ def modify_group2(group):
 
     # If there is a subgroup then still want to modify the first item (the nested group)
     # print('\n\n\n', 'SUBGROUPS: \n', subgroups, '\n\n')
-    if len(subgroups) > 1:
+    if len(subgroups) > 0:
         for subgroup in subgroups_removed:
-            if 'checkbox046' in subgroup:
-                print('-----------------------------------------------------------------------------------------------------', subgroup, '-------------------------------------------------------------------------------------------------->')
+            # if 'checkbox046' in subgroup:
+            #     print('-----------------------------------------------------------------------------------------------------', subgroup, '-------------------------------------------------------------------------------------------------->')
             subgroup_HEIGHT = re.findall(height_pattern, subgroup)[0][0]
             subgroup_WIDTH = re.findall(width_pattern, subgroup)[0][0]
             subgroup_LEFT = re.findall(left_pattern, subgroup)[0][0]
@@ -221,53 +241,58 @@ def modify_group2(group):
             subgroup = multiple_substitutions(subgroup, [subgroup_HEIGHT, subgroup_WIDTH, subgroup_LEFT, subgroup_TOP], [new_subgroup_height, new_subgroup_width, new_subgroup_left, new_subgroup_top])
 
            # now with the nested group having its position changed, we can swap it back for our placeholder so that the items_being_modified is now the fully modified group
-            items_being_modified = items_being_modified.replace('PLACEHOLDERs FOR SUBGROUPs', subgroup)
+            items_being_modified = items_being_modified.replace('PLACEHOLDERs FOR SUBGROUPs', subgroup, 1)
 
     new_group_trimmed = remove_tags(items_being_modified)
-    print(new_group_trimmed)
+    # if 'checkbox046' in new_group_trimmed:
+    #     print('\n==============================================groupTrimmed\n', new_group_trimmed, '\n==============================================^^\n')
     return new_group_trimmed, error
 
 def remove_groups2(html_content):
     """Removes the grouping related to checkbox elements"""
     # Find all groups in hmtl_content (including nested) that contain a checkbox
-    all_groups = extract_group_elements(html_content)
+    all_groups = extract_group_elements(html_content, checkbox_in_matters=True)
     error = False
     print(f'Num of groups found: {len(all_groups)}')
     # print(all_groups)
     while len(all_groups) > 0:
+        blah = False
         print(len(all_groups))
         group_to_change = all_groups[0]
-        # print('\n\n\n', group_to_change, '\n\n\n')
+        # if 'checkbox046' in group_to_change:
+        #     blah = True
+        #     print('\n\n\n', group_to_change, '\n\n\n')
         new_group, error = modify_group2(group_to_change)
-        # print('\nNEW GROUP\n', new_group)
+        # if blah:
+        #     print('\nNEW GROUP\n', new_group)
         html_content = html_content.replace(group_to_change, new_group)
-        all_groups = extract_group_elements(html_content)
+        all_groups = extract_group_elements(html_content, checkbox_in_matters=True)
         
     return html_content, error
 
 
-def remove_groups(html_content):
-    """Removes the grouping related to checkbox elements"""
-    # Find all groups in hmtl_content (including nested) that contain a checkbox
-    all_groups = extract_group_elements(html_content)
-    error = False
+# def remove_groups(html_content):
+#     """Removes the grouping related to checkbox elements"""
+#     # Find all groups in hmtl_content (including nested) that contain a checkbox
+#     all_groups = extract_group_elements(html_content)
+#     error = False
 
-    # while len(all_groups) > 0:
-    for i in range(0, len(all_groups)-1):
-        current_group = all_groups[i]
-        next_group = all_groups[i+1]
-        placeholder = f'Placeholder for {i}'
-        if next_group in current_group:
-            group_to_change = current_group.replace(next_group, placeholder)
-            degrouped, error = modify_group(group_to_change, next_group)
-            degrouped_current_group = degrouped.replace(placeholder, next_group)
-            print(degrouped_current_group)
+#     # while len(all_groups) > 0:
+#     for i in range(0, len(all_groups)-1):
+#         current_group = all_groups[i]
+#         next_group = all_groups[i+1]
+#         placeholder = f'Placeholder for {i}'
+#         if next_group in current_group:
+#             group_to_change = current_group.replace(next_group, placeholder)
+#             degrouped, error = modify_group(group_to_change, next_group)
+#             degrouped_current_group = degrouped.replace(placeholder, next_group)
+#             print(degrouped_current_group)
 
-        else:
-            group_to_change = current_group
-            degrouped_current_group = modify_group(group_to_change, 'None')
+#         else:
+#             group_to_change = current_group
+#             degrouped_current_group = modify_group(group_to_change, 'None')
 
-        html_content = html_content.replace(current_group, degrouped_current_group)
+#         html_content = html_content.replace(current_group, degrouped_current_group)
     # all_groups = extract_group_elements(html_content)
     # print(len(all_groups))
         # break
