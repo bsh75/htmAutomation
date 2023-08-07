@@ -19,22 +19,3 @@ def remove_PV_from_file(new_file_path):
         print(f"Modified file: {new_file_path}")
     except FileNotFoundError:
         print(f"The file '{new_file_path}' doesn't exist. Continuing with other operations...")
-
-
-# file = 'abstract_BH/2m-ahu1_files/DS_datasource1.dsd'
-
-# remove_PV_from_file(file)
-
-# # Define the directory path
-# directory = "abstract_BH"
-
-# # Iterate through all folders and files in the directory
-# for root, dirs, files in os.walk(directory):
-#     for file in files:
-#         # Check if the file starts with "DS_datasource"
-#         if file.startswith("DS_datasource1.dsd"):
-#             # Construct the file path
-#             file_path = os.path.join(root, file)
-
-#             # Process the file
-#             process_file(file_path)

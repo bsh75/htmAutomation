@@ -1,34 +1,9 @@
-from bs4 import BeautifulSoup
-
-def find_grouped_elements(htm_content):
-    soup = BeautifulSoup(htm_content, 'html.parser')
-    grouped_elements = []
-
-    for div_tag in soup.find_all('div'):
-        if div_tag.find('div'):
-            # If the current <DIV> tag contains nested <DIV> tags, skip it
-            continue
-
-        # Get the content inside the <DIV> tag as a string
-        div_content = str(div_tag)
-
-        # Add the content to the list of grouped elements
-        grouped_elements.append(div_content)
-
-    return grouped_elements
+from ungroup import extract_group_elements
 
 # Example usage:
 htm_content = '''
-<DIV>
-    This is a grouped element.
-    <DIV>
-        This is a nested grouped element.
-    </DIV>
-</DIV>
-<DIV>
-    Another grouped element.
-</DIV>
-'''
+<DIV tabIndex=-1 id=group006 class=hvg.group.1 \nstyle="FONT-SIZE: 0pt; HEIGHT: 114px; WIDTH: 290px; POSITION: absolute; LEFT: 388px; TOP: 232px; BEHAVIOR: url(#HDXVectorFactory#group)" \nhdxproperties="fillColorBlink:False;Height:114;lineColorBlink:False;Width:290;" \nHDX_LOCK="-1">\n<DIV tabIndex=-1 id=picture008 class=hsc.image.1 \nstyle="OVERFLOW: hidden; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 80.7%; FONT-FAMILY: Arial; WIDTH: 82.75%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 17.24%; TOP: 19.29%; BEHAVIOR: url(#HDXVectorFactory#image)" \nhdxproperties="fillColorBlink:False;Height:92;lineColorBlink:False;Src:.\\2m-fans_files\\Rect_Duct_Blue_Straight_Short2_Mod.png;Width:240;" \nshapesrc=".\\2m-fans_files\\Rect_Duct_Blue_Straight_Short2_Mod.png"></DIV>\n<DIV tabIndex=-1 id=shape014 class="hsc.shape.1 hsc.shapeanimation.1" \nstyle="FONT-SIZE: 0px; TEXT-DECORATION: none; HEIGHT: 64.91%; FONT-FAMILY: Arial; WIDTH: 33.1%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 50.34%; TOP: 33.33%; BEHAVIOR: url(#HSCShapeLinkBehavior) url(#HSCShapeLinkBehavior#shapelinkanimator) url(#HDXFaceplateBehavior) url(#HDXVectorFactory#shapelink) url(#BindingBehavior)" \nhdxproperties="fillColorBlink:False;HDXBINDINGID:18;Height:74;lineColorBlink:False;Width:96;" \nvalue = "1" src = ".\\2m-fans_files\\Fan_Centrigfugal_Right_8State.sha" parameters \n= "" linkType = "embedded" globalscripts = "" styleClass = "" \nnumberOfShapesAnimated = "8">\n<DIV tabIndex=-1 id=shape014_BadValue000 class=hvg.group.1 \nstyle="FONT-SIZE: 0pt; HEIGHT: 100%; WIDTH: 100%; POSITION: absolute; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#group)" \nhdxproperties="fillColorBlink:False;Height:74;lineColorBlink:False;Width:96;">\n<DIV tabIndex=-1 id=shape014_BadValue001 class=hsc.image.1 \nstyle="OVERFLOW: hidden; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 56.75%; FONT-FAMILY: Arial; WIDTH: 43.75%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 16.66%; TOP: 16.21%; BEHAVIOR: url(#HDXVectorFactory#image)" \nhdxproperties="fillColorBlink:False;Height:42;lineColorBlink:False;Src:.\\2m-fans_files\\Fan_Centrigfugal_Right_8State_files\\Fan_Centrifugal_Blades_01_Ghost.png;Width:42;" \nshapesrc=".\\2m-fans_files\\Fan_Centrigfugal_Right_8State_files\\Fan_Centrifugal_Blades_01_Ghost.png"></DIV>\n<DIV tabIndex=-1 id=shape014_BadValue002 class=hsc.image.1 \nstyle="OVERFLOW: hidden; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 98.64%; FONT-FAMILY: Arial; WIDTH: 98.95%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#image)" \nhdxproperties="fillColorBlink:False;Height:73;lineColorBlink:False;Src:.\\2m-fans_files\\Fan_Centrigfugal_Right_8State_files\\Fan_Centrifugal_Right_Gray_Ghost.png;Width:95;" \nshapesrc=".\\2m-fans_files\\Fan_Centrigfugal_Right_8State_files\\Fan_Centrifugal_Right_Gray_Ghost.png"></DIV></DIV></DIV>\n<DIV tabIndex=-1 id=group036 class=hvg.group.1 \nstyle="FONT-SIZE: 0pt; HEIGHT: 21.05%; WIDTH: 57.24%; POSITION: absolute; LEFT: 0%; TOP: 72.8%; BEHAVIOR: url(#HDXVectorFactory#group)" \nhdxproperties="fillColorBlink:False;Height:24;lineColorBlink:False;Width:166;">\n<DIV tabIndex=-1 
+id=picture159 class=hsc.image.1 \nstyle="OVERFLOW: hidden; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 83.33%; FONT-FAMILY: Arial; WIDTH: 99.39%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 0%; TOP: 12.5%; BEHAVIOR: url(#HDXVectorFactory#image)" \nhdxproperties="fillColorBlink:False;Height:20;lineColorBlink:False;Src:.\\2m-fans_files\\txtBG.gif;Width:165;" \nshapesrc=".\\2m-fans_files\\txtBG.gif"></DIV>\n<DIV tabIndex=-1 id=textbox257 class=hvg.textbox.1 \nstyle="OVERFLOW: hidden; FONT-SIZE: 9pt; TEXT-DECORATION: none; HEIGHT: 62.5%; FONT-FAMILY: Arial; WIDTH: 39.75%; POSITION: absolute; FONT-WEIGHT: normal; COLOR: #000000; FONT-STYLE: normal; TEXT-ALIGN: left; LEFT: 3.01%; TOP: 16.66%; BEHAVIOR: url(#HDXVectorFactory#text)" \nglobalscripts \nhdxproperties="FillColor:transparent;fillColorBlink:False;FillStyle:1;Height:15;LineColor:transparent;lineColorBlink:False;LineStyle:0;textColor:#000000;textColorBlink:False;TotalRotation:0;Width:66;">Fan \nS/S</DIV>\n<DIV tabIndex=-1 id=picture160 class=hsc.image.1 \nstyle="OVERFLOW: hidden; FONT-SIZE: 12pt; TEXT-DECORATION: none; HEIGHT: 75%; FONT-FAMILY: Arial; WIDTH: 48.19%; POSITION: absolute; FONT-WEIGHT: 400; FONT-STYLE: normal; LEFT: 51.8%; TOP: 12.5%; BEHAVIOR: url(#HDXVectorFactory#image)" \nhdxproperties="fillColorBlink:False;Height:18;lineColorBlink:False;Src:.\\2m-fans_files\\txtBG_Blk.gif;Width:80;" \nshapesrc=".\\2m-fans_files\\txtBG_Blk.gif"></DIV><SPAN tabIndex=-1 id=checkbox050 \nclass=hsc.checkbox.1 \nstyle="OVERFLOW: hidden; CURSOR: default; TEXT-DECORATION: none; HEIGHT: 91.66%; WIDTH: 13.25%; POSITION: absolute; FONT: 400 12pt Arial; LEFT: 39.15%; TOP: 0%; BEHAVIOR: url(#HSCCheckBoxBehavior) url(#BindingBehavior); BACKGROUND-COLOR: transparent" \nhdxproperties="fillColorBlink:False;HDXBINDINGID:21;inverseLogic:1;textColorBlink:False;" \nprintInverse="true" printValue="true"><INPUT tabIndex=-1 \nstyle="MARGIN: 1px; BACKGROUND-COLOR: transparent" CHECKED \ntype=checkbox></INPUT><SPAN style="COLOR: #000000">Checkbox</SPAN></SPAN><SPAN \ntabIndex=-1 id=combobox009 title=Combobox class=hsc.combo.1 \nstyle="OVERFLOW: hidden; FONT-SIZE: 10pt; TEXT-DECORATION: none; BORDER-TOP: transparent 2px; HEIGHT: 75%; FONT-FAMILY: Arial; BORDER-RIGHT: transparent 2px; WIDTH: 43.37%; BORDER-BOTTOM: transparent 2px; POSITION: absolute; FONT-WEIGHT: bold; COLOR: #ffffff; PADDING-BOTTOM: 2px; FONT-STYLE: normal; TEXT-ALIGN: center; PADDING-TOP: 2px; PADDING-LEFT: 2px; LEFT: 55.42%; BORDER-LEFT: transparent 2px; TOP: 12.5%; PADDING-RIGHT: 2px; BEHAVIOR: url(#HSCComboboxBehavior) url(#BindingBehavior) url(#HoverBehavior); BACKGROUND-COLOR: transparent; TEXT-INDENT: 2px" \nhdxproperties="borderStyle:inset;borderWidth:2px;fillColor:transparent;fillColorBlink:False;HDXBINDINGID:30;lineColor:#ffffff;lineColorBlink:False;textColor:#ffffff;textColorBlink:False;" \nprintValue="Combobox">Combobox</SPAN></DIV>\n<DIV tabIndex=-1 id=textbox026 class=hvg.textbox.1 \nstyle="OVERFLOW: hidden; FONT-SIZE: 12pt; HEIGHT: 15.78%; FONT-FAMILY: Arial; WIDTH: 73.1%; POSITION: absolute; FONT-WEIGHT: bold; COLOR: #000000; FONT-STYLE: normal; TEXT-ALIGN: left; LEFT: 0%; TOP: 0%; BEHAVIOR: url(#HDXVectorFactory#text)" \nhdxproperties="fillColorBlink:False;FillStyle:1;Height:18;lineColorBlink:False;LineStyle:0;textColorBlink:False;TotalRotation:0;Width:212;">Lift \nMachine Room Vent</DIV></DIV>'''
 
-grouped_elements = find_grouped_elements(htm_content)
+grouped_elements = extract_group_elements(htm_content, False)
 print(grouped_elements)

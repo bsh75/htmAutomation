@@ -21,9 +21,6 @@ pointNames = {}
 files_changed = []
 files_to_check = []
 double_grouping_suspected = []
-# file_we_checking = ['2m-ahu1', 'b-ahu1_setpoints', 'b-ahu1_setpointsold', 'b-ahu2_setpoints2', 'B-ahu2_vav_list', 'OSF-FLOORPLAN1']
-
-file_we_checking = ['2m-ahu1', '2m-ahu1_setpoints', '2m-fans', 'ahu03']
 
 # Global params
 autoAdjustor = 0 # Shifts the autobox by 7 pixels
@@ -31,7 +28,7 @@ BOX_to_Auto = -26
 BOX_to_Relinq = 76
 
 #################JUST ONE#################
-# htm_files = ['2m-ahu4.htm']
+htm_files = ['PCR1old.htm', 'misc-fansold,htm', '2m-fans.htm', 'misc-fans.htm']
 #################JUST ONE#################
 
 # Find a path to relinquish and MBS_hand folders to copy into other support folders
@@ -40,8 +37,6 @@ relinquish_shape_file, MBS_hand_shape_file = find_files_in_folders(originals_fol
 # Now iterate through the .htm files
 for htm_file in htm_files:
     graphic = htm_file[0:-4]
-    # if graphic not in file_we_checking:
-    #     continue
     displayFolder = f'{graphic}_files'
     DISPLAYfile_o = f'{originals_folder}/{graphic}.htm'
     support_folder_o = f'{originals_folder}/{displayFolder}'
@@ -57,17 +52,12 @@ for htm_file in htm_files:
     with open(DISPLAYfile_o, 'r') as file:
         htm_contents_g = file.read()
     # Removes the grouping involved with the checkbox elements
-    htm_contents, error = remove_groups2(htm_contents_g)
+    htm_contents = remove_groups2(htm_contents_g)
     with open("play.htm", "w") as f:
         f.write(htm_contents)
-    # if htm_contents == htm_contents_g:
-    #     print("\n\n\n\n\n\n\nnothing changed")
-    if error:
-        double_grouping_suspected.append(graphic)
 
     # Finds all the checkbox elemets
     check_boxes = find_checkbox_elements(htm_contents)
-    # print(check_boxes)
     num_checkboxes += len(check_boxes)
 
     if len(check_boxes) == 0:
@@ -89,9 +79,11 @@ for htm_file in htm_files:
         pointNames[graphic] = []
         # Check if the correct supporting files are in the original support folder and add them to new support folder if not
         if 'relinquish_control_files' not in os.listdir(support_folder_o):
+            print("\nSHOULD BE COPYING RELINQ FOR", graphic)
             copy_file(source_file=relinquish_shape_file, destination_folder=support_folder)
             copy_folder(source_folder=relinquish_folder, destination_folder=support_folder)
         if 'MBS_Hand-24Apr_files' not in os.listdir(support_folder_o):
+            print("\nSHOULD BE COPYING MBS FOR", graphic)
             copy_file(source_file=MBS_hand_shape_file, destination_folder=support_folder)
             copy_folder(source_folder=MBS_hand_folder, destination_folder=support_folder)
 
@@ -101,11 +93,6 @@ for htm_file in htm_files:
         for i in range(0, len(check_boxes)): #change to len(check_boxes)
             # Get checkbox to replace
             checkBox = check_boxes[i]
-            # print(checkBox)
-            # if 'HDXBINDINGID:26' in checkBox:
-            #     print("WHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATTTTTT")
-            # print("\n\nCHECKBOX::::::::::\n", checkBox, "CHECKBOX::::::::::----------------------------------------")
-            # print(checkBox)
             checkBoxName = extract_checkbox_id(checkBox)
 
             # Find new names for created shapes for Autobox and Relinquish
@@ -114,17 +101,9 @@ for htm_file in htm_files:
             
             # Get important information from checkbox element
             infoDisplay, infoData = extract_checkbox_info(checkBox)
-            # print(infoData)
             CB_LEFT = infoData[0]
             CB_TOP = infoData[1]
             CB_bindingID = infoData[2]
-            # element_to_check = checkBox
-            # if '%' in infoData[0]:
-            #     nested = True
-            #     global_coords = get_parent_parameters(element_to_check, htm_contents, infoData)
-            #     print(global_coords)
-            #     CB_LEFT = global_coords[0]
-            #     CB_TOP = global_coords[1]
 
             # Get find the binding object
             CB_objectID, binding_to_delete = find_objectID(b_contents, CB_bindingID)
@@ -132,6 +111,7 @@ for htm_file in htm_files:
             # Find the datasource object and corresponding point name
             pointName, DS_object_to_delete = get_point_name(ds_contents, CB_objectID)
             pointNames[graphic].append(pointName)
+            
             # Now reverse process to find the position of other objects with the same point name
             other_object_IDs_same_point = get_dataobject_ids_by_point_name(ds_contents, pointName)
             other_binding_IDs = find_binding_IDs(b_contents, other_object_IDs_same_point)
@@ -175,11 +155,10 @@ for htm_file in htm_files:
                 relinquish_left = adjust_position(relinquish_left, 31)
 
             if pointName.endswith('-SP') and 'setpoints' in graphic:
-                relinquish_left = adjust_position(relinquish_left, 100)
+                relinquish_left = adjust_position(relinquish_left, 112)
 
             # if pointName.endswith('AD'):
             #     # shift both items right a few pixels
-
 
             # Find the next available binding and object IDs
             HDXids = find_next_three_binding_ids(b_contents)
