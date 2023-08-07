@@ -4,6 +4,7 @@ import os
 from functions import *
 from ungroup import remove_groups2
 import math
+from PVswap import remove_PV_from_file
 
 # Folders containing graphics
 originals_folder = 'Untouched abstract'
@@ -49,8 +50,8 @@ for htm_file in htm_files:
 
     new_DISPLAYfile = f'{new_folder}/{graphic}.htm'
     support_folder = f'{new_folder}/{displayFolder}'
-    new_DSfile = f'{support_folder}/DS_datasource1.dsd'
-    new_BINDINGfile = f'{support_folder}/Bindings.xml'
+    new_DSfile_path = f'{support_folder}/DS_datasource1.dsd'
+    new_BINDINGfile_path = f'{support_folder}/Bindings.xml'
 
     # Open and read the current files for processing
     with open(DISPLAYfile_o, 'r') as file:
@@ -126,7 +127,6 @@ for htm_file in htm_files:
             #     CB_TOP = global_coords[1]
 
             # Get find the binding object
-            print(f"{checkBoxName}: with hdxbid: {CB_bindingID}")
             CB_objectID, binding_to_delete = find_objectID(b_contents, CB_bindingID)
 
             # Find the datasource object and corresponding point name
@@ -151,7 +151,6 @@ for htm_file in htm_files:
                 first = True
                 for pattern in coordinates_list:
                     patternL, patternT, pattern_type = pattern
-                    print(patternL, patternT, pattern_type, CB_LEFT)
                     L_diff = int(patternL[:-2]) - int(CB_LEFT[:-2]) + BOX_to_Auto
                     T_diff =  int(patternT[:-2]) - int(CB_TOP[:-2])
                     diff_score = math.sqrt(L_diff**2 + T_diff**2)
@@ -203,17 +202,19 @@ for htm_file in htm_files:
 
             # Binding file changes
             b_contents = b_contents.replace(binding_to_delete, bindings_to_add)
-            with open(new_BINDINGfile, 'w', encoding='utf-8') as new_B_file:
+            with open(new_BINDINGfile_path, 'w', encoding='utf-8') as new_B_file:
                 new_B_file.write(b_contents)
 
             # Datasource file changes
             ds_contents = ds_contents.replace(DS_object_to_delete, DS_objects_to_add)
-            with open(new_DSfile, 'w', encoding='utf-8') as new_DS_file:
+            with open(new_DSfile_path, 'w', encoding='utf-8') as new_DS_file:
                 new_DS_file.write(ds_contents)
 
             shapes_added.append((shapeAuto, shapeRelinq))
 
-        # print("New Shapes: {}".format(shapes_added))
+    # Each datasource file also needs to have all mentions of PV MD OP SP swapped
+    remove_PV_from_file(DSfile_o, new_DSfile_path)
+
 
 for file in files_changed:
     print(file)

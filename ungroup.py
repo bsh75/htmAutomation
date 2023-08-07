@@ -55,7 +55,7 @@ def format_for_sub(list, PARAM, unit):
 def multiple_substitutions(string, to_replace, to_substitute):
     # Perform substitutions using the lists
     for i in range(len(to_replace)):
-        string = string.replace(to_replace[i], to_substitute[i])
+        string = string.replace(to_replace[i], to_substitute[i], 1)
 
     return string
 
@@ -137,9 +137,6 @@ def format_for_sub2(value, PARAM, unit):
 
 def modify_group2(group):
     in_question = False
-    if 'checkbox046' in group:
-        in_question = True
-    #     print('-----------------------------------------------------------------------------------------------------GROUP', group, '-------------------------------------------------------------------------------------------------->')
 
     # Modifies all the elements in a group except for those that are within a nested group
     height_pattern = r' HEIGHT:\s*([\d.]+)\s*(%|px)'
@@ -181,18 +178,18 @@ def modify_group2(group):
         items_being_modified = group
 
     # if in_question:
-    #     print('+++++++++++++++++++++++++Subss removed\n', subgroups_removed, '\n++++++++++++++++++^^^^^^^^^^^^^^^^^^^^\n\n')
+    #     print('+++++++++++++++++++++++++ items being modded\n', items_being_modified, '\n++++++++++++++++++^^^^^^^^^^^^^^^^^^^^\n\n')
 
     # print(items_being_modified)
     all_heights = [match[0] for match in (re.findall(height_pattern, items_being_modified))]
     all_widths = [match[0] for match in (re.findall(width_pattern, items_being_modified))]
     all_lefts = [match[0] for match in (re.findall(left_pattern, items_being_modified))]
     all_tops = [match[0] for match in (re.findall(top_pattern, items_being_modified))]
-
-    # print(len(all_heights))
-    # print(len(all_widths))
-    # print(len(all_lefts))
-    # print(len(all_tops))
+    # if in_question:
+    #     print(len(all_heights))
+    #     print(len(all_widths))
+    #     print(len(all_lefts))
+    #     print(len(all_tops))
     # print('\n\n\n---------------------------------------------------------------------------------------------------------\nITEMS BEIGN MODIFIED1\n', items_being_modified)
     for i in range(1, len(all_heights)):
         old_height = all_heights[i]
@@ -219,8 +216,6 @@ def modify_group2(group):
     # print('\n\n\n', 'SUBGROUPS: \n', subgroups, '\n\n')
     if len(subgroups) > 0:
         for subgroup in subgroups_removed:
-            # if 'checkbox046' in subgroup:
-            #     print('-----------------------------------------------------------------------------------------------------', subgroup, '-------------------------------------------------------------------------------------------------->')
             subgroup_HEIGHT = re.findall(height_pattern, subgroup)[0][0]
             subgroup_WIDTH = re.findall(width_pattern, subgroup)[0][0]
             subgroup_LEFT = re.findall(left_pattern, subgroup)[0][0]
@@ -244,8 +239,6 @@ def modify_group2(group):
             items_being_modified = items_being_modified.replace('PLACEHOLDERs FOR SUBGROUPs', subgroup, 1)
 
     new_group_trimmed = remove_tags(items_being_modified)
-    # if 'checkbox046' in new_group_trimmed:
-    #     print('\n==============================================groupTrimmed\n', new_group_trimmed, '\n==============================================^^\n')
     return new_group_trimmed, error
 
 def remove_groups2(html_content):
@@ -253,18 +246,10 @@ def remove_groups2(html_content):
     # Find all groups in hmtl_content (including nested) that contain a checkbox
     all_groups = extract_group_elements(html_content, checkbox_in_matters=True)
     error = False
-    print(f'Num of groups found: {len(all_groups)}')
-    # print(all_groups)
     while len(all_groups) > 0:
         blah = False
-        print(len(all_groups))
         group_to_change = all_groups[0]
-        # if 'checkbox046' in group_to_change:
-        #     blah = True
-        #     print('\n\n\n', group_to_change, '\n\n\n')
         new_group, error = modify_group2(group_to_change)
-        # if blah:
-        #     print('\nNEW GROUP\n', new_group)
         html_content = html_content.replace(group_to_change, new_group)
         all_groups = extract_group_elements(html_content, checkbox_in_matters=True)
         
