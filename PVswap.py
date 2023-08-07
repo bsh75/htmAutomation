@@ -1,9 +1,9 @@
 import os
 
-def remove_PV_from_file(old_file_path, new_file_path):
+def remove_PV_from_file(new_file_path):
     try:
         # Read the contents of the file
-        with open(old_file_path, "r") as f:
+        with open(new_file_path, "r") as f:
             file_content = f.read()
 
         # Replace the desired strings in the file content
@@ -18,7 +18,7 @@ def remove_PV_from_file(old_file_path, new_file_path):
 
         print(f"Modified file: {new_file_path}")
     except FileNotFoundError:
-        print(f"The file '{old_file_path}' doesn't exist. Continuing with other operations...")
+        print(f"The file '{new_file_path}' doesn't exist. Continuing with other operations...")
 
 
 # file = 'abstract_BH/2m-ahu1_files/DS_datasource1.dsd'

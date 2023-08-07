@@ -31,7 +31,7 @@ BOX_to_Auto = -26
 BOX_to_Relinq = 76
 
 #################JUST ONE#################
-# htm_files = ['ahu01.htm']
+# htm_files = ['2m-ahu4.htm']
 #################JUST ONE#################
 
 # Find a path to relinquish and MBS_hand folders to copy into other support folders
@@ -213,7 +213,7 @@ for htm_file in htm_files:
             shapes_added.append((shapeAuto, shapeRelinq))
 
     # Each datasource file also needs to have all mentions of PV MD OP SP swapped
-    remove_PV_from_file(DSfile_o, new_DSfile_path)
+    remove_PV_from_file(new_DSfile_path)
 
 
 for file in files_changed:
