@@ -28,7 +28,7 @@ BOX_to_Auto = -26
 BOX_to_Relinq = 76
 
 #################JUST ONE#################
-htm_files = ['PCR1old.htm', 'misc-fansold,htm', '2m-fans.htm', 'misc-fans.htm']
+# htm_files = ['PCR1old.htm', 'misc-fansold,htm', '2m-fans.htm', 'misc-fans.htm']
 #################JUST ONE#################
 
 # Find a path to relinquish and MBS_hand folders to copy into other support folders
