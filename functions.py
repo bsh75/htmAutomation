@@ -226,18 +226,26 @@ def find_binding_IDs(xml_content, object_ids):
 
 def get_point_name(datasource_content, target_id):
     '''Removes datasource dataobjects with objectid in "target_ids" and saves their '''
-    pattern = r'<dataobject id="(\d+)"(.*?)</dataobject>'
+    if '<dataobject' in datasource_content:
+        pattern = r'<dataobject id="(\d+)"(.*?)</dataobject>'
+        name_pattern = r'<property name="PointRefPointName">(.*?)</property>'
+    else:
+        print("WARNING: DATSOURCE NEW FORMAT")
+
     dataobject_matches = re.findall(pattern, datasource_content, re.DOTALL)
-
-
+    # print(dataobject_matches)
     for match in dataobject_matches:
         dataobject_id, dataobject_content = match
+        # print(dataobject_id)
         if dataobject_id == target_id:
+            # print(dataobject_content)
             deleted_dataobject = f"<dataobject id=\"{dataobject_id}\"{dataobject_content}</dataobject>"
             # Extract the PointRefPointName
-            point_name_match = re.search(r'<property name="PointRefPointName">(.*?)</property>', dataobject_content)
+            point_name_match = re.search(name_pattern, dataobject_content)
             if point_name_match:
                 point_name = point_name_match.group(1)
+                break
+
     return point_name, deleted_dataobject
 
 def get_dataobject_ids_by_point_name(datasource_content, point_name):

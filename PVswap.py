@@ -12,6 +12,12 @@ def remove_PV_from_file(new_file_path):
         file_content = file_content.replace(">SP<", ">PresentValue<")
         file_content = file_content.replace(">MD<", ">ModeState<")
 
+        # For changes in popups
+        file_content = file_content.replace('bstrParamName="PV"', 'bstrParamName="PresentValue"')
+        file_content = file_content.replace('bstrParamName="OP"', 'bstrParamName="PresentValue"')
+        file_content = file_content.replace('bstrParamName="SP"', 'bstrParamName="PresentValue"')
+        file_content = file_content.replace('bstrParamName="MD"', 'bstrParamName="ModeState"')
+
         # Write the modified content back to the file
         with open(new_file_path, "w") as f:
             f.write(file_content)

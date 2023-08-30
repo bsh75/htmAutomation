@@ -7,8 +7,8 @@ import math
 from PVswap import remove_PV_from_file
 
 # Folders containing graphics
-originals_folder = 'Untouched abstract'
-new_folder = 'abstract_BH/abstract_CPOupgradeWorking'
+originals_folder = 'Untouched abstract/popups'
+new_folder = 'abstract_BH/abstract_CPOupgradeWorking/popups'
 
 # Get a list of all files in the directory
 files = os.listdir(originals_folder)
@@ -34,6 +34,7 @@ BOX_to_Relinq = 76
 # Find a path to relinquish and MBS_hand folders to copy into other support folders
 relinquish_folder, MBS_hand_folder = find_folders_in_folders(originals_folder, 'relinquish_control_files', 'MBS_Hand-24Apr_files')
 relinquish_shape_file, MBS_hand_shape_file = find_files_in_folders(originals_folder, 'relinquish_control.sha', 'MBS_Hand-24Apr.sha')
+
 # Now iterate through the .htm files
 for htm_file in htm_files:
     graphic = htm_file[0:-4]
@@ -109,6 +110,7 @@ for htm_file in htm_files:
             CB_objectID, binding_to_delete = find_objectID(b_contents, CB_bindingID)
 
             # Find the datasource object and corresponding point name
+            print(CB_bindingID, CB_objectID)
             pointName, DS_object_to_delete = get_point_name(ds_contents, CB_objectID)
             pointNames[graphic].append(pointName)
             
@@ -167,7 +169,7 @@ for htm_file in htm_files:
             # Get new code elements for each file
             autoBoxHTM, autoBoxXML, autoBoxDSD = get_auto_box(shapeAuto, pointName, HDXids, DOids, auto_left, auto_top, displayFolder)
             relinquish_script_string, relinquish_body_string, MS_relinquish_binding, RC_relinquish_binding, MS_relinquish_dataS, RC_relinquish_dataS = get_relinquish(shapeRelinq, pointName, HDXids, DOids, relinquish_left, relinquish_top, displayFolder)
-            
+                
             # Combine the relinquish and auto elements for each file
             HTM_elements_to_add = relinquish_body_string + autoBoxHTM
             DS_objects_to_add = MS_relinquish_dataS + RC_relinquish_dataS + autoBoxDSD
